@@ -1,0 +1,28 @@
+{
+  "name": "naas",
+  "version": "0.1.0",
+  "description": "No as a Service: every request returns No!",
+  "license": "MIT",
+  "type": "module",
+  "main": "src/server.js",
+  "bin": {
+    "naas": "./src/cli.js",
+    "naas-mcp": "./src/mcp.js"
+  },
+  "scripts": {
+    "mcp": "node src/mcp.js",
+    "start": "node src/server.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "express": "^5.1.0"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@fortawesome/free-brands-svg-icons": "^7.2.0",
+    "@fortawesome/free-solid-svg-icons": "^7.2.0"
+  }
+}
