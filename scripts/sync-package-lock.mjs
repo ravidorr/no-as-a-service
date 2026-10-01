@@ -29,7 +29,7 @@ export function generatePackageLockFromManifest(
 
   try {
     writeFileSync(join(tempDir, 'package.json'), manifestContents);
-    execSyncImpl('npm install --package-lock-only', {
+    execSyncImpl('npm install --package-lock-only --ignore-scripts', {
       cwd: tempDir,
       stdio: 'pipe'
     });

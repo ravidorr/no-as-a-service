@@ -17,7 +17,10 @@ test('generatePackageLockFromManifest uses the provided manifest contents', () =
   const manifest = JSON.stringify({
     name: 'naas-lock-sync-test',
     version: '1.0.0',
-    private: true
+    private: true,
+    scripts: {
+      prepare: 'node scripts/prepare-husky.mjs'
+    }
   });
 
   const lockfile = generatePackageLockFromManifest(manifest);

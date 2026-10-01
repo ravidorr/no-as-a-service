@@ -55,14 +55,23 @@ Coverage requirements:
 2. Keep changes focused on one fix or feature.
 3. Update or add tests when behavior changes.
 4. Open a pull request against `main`.
-5. Ensure the `test` CI check passes.
+5. Ensure the `test` and `release-notes` CI checks pass.
 6. Request review and resolve all review conversations before merge.
 
 Protected `main` requires:
 
-- a passing `test` check
+- passing `test` and `release-notes` checks
 - at least one approving review
 - resolved review conversations
+
+## Releases
+
+When a version bump merges to `main`, GitHub Actions creates a GitHub Release and publishes `@ravidorr/naas` to npm via [Trusted Publishing](https://docs.npmjs.com/trusted-publishers/) (OIDC). No long-lived `NPM_TOKEN` secret is required.
+
+Before the first automated publish, maintainers must:
+
+1. Publish once from a trusted machine with `npm login` and `npm publish --access public` (see README).
+2. On npm, open `@ravidorr/naas` → **Settings** → **Trusted Publisher** → **GitHub Actions** and link `ravidorr/no-as-a-service` with workflow file `release.yml`.
 
 ## Git hooks
 

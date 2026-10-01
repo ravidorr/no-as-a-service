@@ -3,6 +3,7 @@ import { execSync } from 'node:child_process';
 import { test } from 'node:test';
 import {
   compareVersions,
+  extractChangelogSection,
   hasChangelogEntry,
   parseVersion,
   readChangelogAtRef,
@@ -30,6 +31,38 @@ test('hasChangelogEntry matches release headings', () => {
 
   assert.equal(hasChangelogEntry(changelog, '0.1.1'), true);
   assert.equal(hasChangelogEntry(changelog, '0.1.0'), false);
+});
+
+test('extractChangelogSection returns the release body for a version', () => {
+  const changelog = `# Changelog
+
+## 0.2.0 - 2026-10-01
+
+- Publish to npm.
+- Automate releases.
+
+## 0.1.0 - 2026-05-10
+
+- Initial release.
+`;
+
+  assert.equal(
+    extractChangelogSection(changelog, '0.2.0'),
+    '- Publish to npm.\n- Automate releases.'
+  );
+});
+
+test('extractChangelogSection rejects missing or empty sections', () => {
+  const changelog = '# Changelog\n\n## 0.2.0 - 2026-10-01\n';
+
+  assert.throws(
+    () => extractChangelogSection(changelog, '0.2.0'),
+    /empty/
+  );
+  assert.throws(
+    () => extractChangelogSection(changelog, '9.9.9'),
+    /no release entry/
+  );
 });
 
 test('validateReleaseNotes requires a version bump and changelog entry', () => {
