@@ -40,6 +40,18 @@ The API listens on `http://localhost:3000` by default.
 The UI is available at `http://localhost:3000`.
 Use `?request=` to open a shareable NaaS flow that types and submits the request automatically.
 
+Health check:
+
+```sh
+curl http://localhost:3000/health
+```
+
+Output:
+
+```json
+{"status":"No!","version":"0.2.5"}
+```
+
 ```sh
 curl -X POST http://localhost:3000/anything \
   -H 'content-type: application/json' \

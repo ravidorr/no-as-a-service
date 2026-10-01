@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.5 - 2026-10-01
+
+- Add `GET /health`, returning JSON NaaS status and the package version.
+
 ## 0.2.4 - 2026-10-01
 
 - Add ROADMAP.md with completed work, Phase 3 plan, and release reminders.
