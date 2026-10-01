@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.7 - 2026-10-01
+
+- Add a production Docker image with a `/health` health check and README run instructions.
+
 ## 0.2.6 - 2026-10-01
 
 - Publish an OpenAPI specification at `GET /openapi.yaml` for health, `/api/no`, and fallback behavior.

@@ -76,6 +76,38 @@ Use a different port:
 PORT=8080 npm start
 ```
 
+## Docker
+
+Build the image:
+
+```sh
+docker build -t naas .
+```
+
+Run the container:
+
+```sh
+docker run --rm -p 3000:3000 naas
+```
+
+Verify the health check:
+
+```sh
+curl http://localhost:3000/health
+```
+
+Inspect container health status:
+
+```sh
+docker inspect --format='{{.State.Health.Status}}' "$(docker ps -q --filter ancestor=naas)"
+```
+
+Use a different port:
+
+```sh
+docker run --rm -e PORT=8080 -p 8080:8080 naas
+```
+
 ## CLI
 
 After a global install:
