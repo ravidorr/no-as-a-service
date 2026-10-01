@@ -1,6 +1,7 @@
 import express from 'express';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import packageInfo from '../package.json' with { type: 'json' };
 import { NO_RESPONSE } from './no.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -9,6 +10,10 @@ export const app = express();
 const publicPath = resolve(__dirname, '../public');
 
 app.use(express.static(publicPath));
+
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: NO_RESPONSE, version: packageInfo.version });
+});
 
 app.all('/api/no', (req, res) => {
   res.status(200).type('text/plain').send(NO_RESPONSE);

@@ -3,6 +3,7 @@ import { spawn } from 'node:child_process';
 import { after, before, test } from 'node:test';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import packageInfo from '../package.json' with { type: 'json' };
 import { app, resolveListenPort, resolveServerPort, runIfMain, startServer } from '../src/server.js';
 
 const serverPath = resolve('src/server.js');
@@ -22,6 +23,22 @@ after(async () => {
   await new Promise((resolve, reject) => {
     server.close((err) => (err ? reject(err) : resolve()));
   });
+});
+
+test('returns health status and version as JSON', async () => {
+  const response = await fetch(`${baseUrl}/health`);
+
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get('content-type'), /^application\/json/);
+  assert.deepEqual(await response.json(), { status: 'No!', version: packageInfo.version });
+});
+
+test('returns No! for POST /health', async () => {
+  const response = await fetch(`${baseUrl}/health`, { method: 'POST' });
+
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get('content-type'), 'text/plain; charset=utf-8');
+  assert.equal(await response.text(), 'No!');
 });
 
 test('returns No! for any path', async () => {
