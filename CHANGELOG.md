@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.1 - 2026-10-01
+
+- Enforce 100% `src/` coverage in tests, CI, and the pre-commit hook.
+- Verify every `src/**/*.js` file appears in the coverage report.
+- Require Node.js 22 for coverage threshold support.
+- Add community docs: `CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, `PRIVACY.md`, and `SUPPORT.md`.
+- Block pushes and pull requests unless `package.json` is version-bumped and `CHANGELOG.md` has a matching release entry.
+- Regenerate and stage `package-lock.json` automatically when `package.json` is committed.
+
 ## 0.1.0 - 2026-05-10
 
 - Initial NaaS API.
