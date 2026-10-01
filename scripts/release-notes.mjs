@@ -1,4 +1,3 @@
-import { readFileSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 
 const VERSION_PATTERN = /^(\d+)\.(\d+)\.(\d+)$/;
@@ -27,18 +26,13 @@ export function compareVersions(left, right) {
 }
 
 export function readPackageVersionAtRef(ref = 'HEAD') {
-  const contents =
-    ref === 'HEAD'
-      ? readFileSync('package.json', 'utf8')
-      : execSync(`git show ${ref}:package.json`, { encoding: 'utf8' });
+  const contents = execSync(`git show ${ref}:package.json`, { encoding: 'utf8' });
 
   return JSON.parse(contents).version;
 }
 
 export function readChangelogAtRef(ref = 'HEAD') {
-  return ref === 'HEAD'
-    ? readFileSync('CHANGELOG.md', 'utf8')
-    : execSync(`git show ${ref}:CHANGELOG.md`, { encoding: 'utf8' });
+  return execSync(`git show ${ref}:CHANGELOG.md`, { encoding: 'utf8' });
 }
 
 export function hasChangelogEntry(changelog, version) {

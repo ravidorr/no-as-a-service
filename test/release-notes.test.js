@@ -1,9 +1,12 @@
 import assert from 'node:assert/strict';
+import { execSync } from 'node:child_process';
 import { test } from 'node:test';
 import {
   compareVersions,
   hasChangelogEntry,
   parseVersion,
+  readChangelogAtRef,
+  readPackageVersionAtRef,
   validateReleaseNotes
 } from '../scripts/release-notes.mjs';
 
@@ -50,4 +53,22 @@ test('validateReleaseNotes passes when version and changelog are updated', () =>
   });
 
   assert.deepEqual(errors, []);
+});
+
+test('readPackageVersionAtRef reads the committed HEAD version', () => {
+  const headVersion = readPackageVersionAtRef('HEAD');
+  const committedVersion = JSON.parse(
+    execSync('git show HEAD:package.json', { encoding: 'utf8' })
+  ).version;
+
+  assert.equal(headVersion, committedVersion);
+});
+
+test('readChangelogAtRef reads the committed HEAD changelog', () => {
+  const headChangelog = readChangelogAtRef('HEAD');
+  const committedChangelog = execSync('git show HEAD:CHANGELOG.md', {
+    encoding: 'utf8'
+  });
+
+  assert.equal(headChangelog, committedChangelog);
 });

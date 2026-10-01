@@ -1,5 +1,7 @@
 import { execSync } from 'node:child_process';
-import { resolve } from 'node:path';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 export function listStagedFiles() {
@@ -15,6 +17,29 @@ export function shouldSyncPackageLock(stagedFiles) {
   return stagedFiles.includes('package.json');
 }
 
+export function readStagedFileContent(filePath) {
+  return execSync(`git show :${filePath}`, { encoding: 'utf8' });
+}
+
+export function generatePackageLockFromManifest(
+  manifestContents,
+  { execSyncImpl = execSync } = {}
+) {
+  const tempDir = mkdtempSync(join(tmpdir(), 'naas-lock-sync-'));
+
+  try {
+    writeFileSync(join(tempDir, 'package.json'), manifestContents);
+    execSyncImpl('npm install --package-lock-only', {
+      cwd: tempDir,
+      stdio: 'pipe'
+    });
+
+    return readFileSync(join(tempDir, 'package-lock.json'), 'utf8');
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+}
+
 export function syncPackageLock() {
   const stagedFiles = listStagedFiles();
 
@@ -22,7 +47,10 @@ export function syncPackageLock() {
     return false;
   }
 
-  execSync('npm install', { stdio: 'inherit' });
+  const stagedManifest = readStagedFileContent('package.json');
+  const lockfileContents = generatePackageLockFromManifest(stagedManifest);
+
+  writeFileSync('package-lock.json', lockfileContents);
   execSync('git add package-lock.json', { stdio: 'inherit' });
 
   return true;
