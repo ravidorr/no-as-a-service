@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.3 - 2026-10-01
+
+- Parse Node.js 24 info-prefixed coverage reports in the inventory check.
+- Run coverage explicitly in the release workflow before publishing without lifecycle scripts.
+
 ## 0.2.2 - 2026-10-01
 
 - Preserve non-workflow paths when classifying renamed files for release-note validation.
