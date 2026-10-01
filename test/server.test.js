@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
+import { request as httpRequest } from 'node:http';
 import { after, before, test } from 'node:test';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -10,6 +11,25 @@ const serverPath = resolve('src/server.js');
 
 let server;
 let baseUrl;
+
+function requestServer(url, method) {
+  return new Promise((resolve, reject) => {
+    const request = httpRequest(url, { method }, (response) => {
+      let body = '';
+
+      response.setEncoding('utf8');
+      response.on('data', (chunk) => {
+        body += chunk;
+      });
+      response.on('end', () => {
+        resolve({ body, headers: response.headers, status: response.statusCode });
+      });
+    });
+
+    request.on('error', reject);
+    request.end();
+  });
+}
 
 before(async () => {
   server = app.listen(0);
@@ -56,6 +76,26 @@ test('returns No! for any path', async () => {
   assert.equal(await response.text(), 'No!');
 });
 
+test('serves the OpenAPI specification', async () => {
+  const response = await fetch(`${baseUrl}/openapi.yaml`);
+  const document = await response.text();
+
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get('content-type'), 'text/yaml; charset=utf-8');
+  assert.match(document, /^openapi: 3\.1\.1$/m);
+  assert.match(document, /^  title: NaaS API$/m);
+  assert.match(document, /^  \/health:$/m);
+  assert.match(document, /^  \/api\/no:$/m);
+  assert.match(document, /^                required: \[status, version\]$/m);
+  assert.match(document, /^        text\/plain:$/m);
+  assert.match(document, /^x-naas-catch-all:$/m);
+  assert.match(document, /^  description: Every unmatched request path and HTTP method returns `200 text\/plain` with `No!`\.$/m);
+
+  for (const method of ['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace']) {
+    assert.match(document, new RegExp(`^    ${method}:$`, 'm'));
+  }
+});
+
 test('serves the UI at root', async () => {
   const response = await fetch(`${baseUrl}/`);
   const body = await response.text();
@@ -98,6 +138,16 @@ test('returns No! from the UI API endpoint', async () => {
   assert.equal(response.status, 200);
   assert.equal(response.headers.get('content-type'), 'text/plain; charset=utf-8');
   assert.equal(await response.text(), 'No!');
+});
+
+test('returns No! for every documented API method', async () => {
+  for (const method of ['GET', 'PUT', 'POST', 'DELETE', 'OPTIONS', 'HEAD', 'PATCH', 'TRACE']) {
+    const response = await requestServer(`${baseUrl}/api/no`, method);
+
+    assert.equal(response.status, 200);
+    assert.equal(response.headers['content-type'], 'text/plain; charset=utf-8');
+    assert.equal(response.body, method === 'HEAD' ? '' : 'No!');
+  }
 });
 
 test('returns No! for any payload', async () => {

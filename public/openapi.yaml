@@ -1,0 +1,69 @@
+openapi: 3.1.1
+info:
+  title: NaaS API
+  version: 0.2.6
+  description: |
+    Every unmatched path and HTTP method returns `200 text/plain` with `No!`.
+    Static assets, `GET /health`, and `/api/no` take precedence over that fallback.
+paths:
+  /health:
+    get:
+      summary: Return service health and package version
+      responses:
+        '200':
+          description: NaaS health status
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, version]
+                properties:
+                  status:
+                    type: string
+                    const: No!
+                  version:
+                    type: string
+  /api/no:
+    get:
+      responses:
+        '200':
+          $ref: '#/components/responses/NoResponse'
+    put:
+      responses:
+        '200':
+          $ref: '#/components/responses/NoResponse'
+    post:
+      responses:
+        '200':
+          $ref: '#/components/responses/NoResponse'
+    delete:
+      responses:
+        '200':
+          $ref: '#/components/responses/NoResponse'
+    options:
+      responses:
+        '200':
+          $ref: '#/components/responses/NoResponse'
+    head:
+      responses:
+        '200':
+          $ref: '#/components/responses/NoResponse'
+    patch:
+      responses:
+        '200':
+          $ref: '#/components/responses/NoResponse'
+    trace:
+      responses:
+        '200':
+          $ref: '#/components/responses/NoResponse'
+components:
+  responses:
+    NoResponse:
+      description: NaaS response
+      content:
+        text/plain:
+          schema:
+            type: string
+            const: No!
+x-naas-catch-all:
+  description: Every unmatched request path and HTTP method returns `200 text/plain` with `No!`.

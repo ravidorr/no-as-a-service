@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.6 - 2026-10-01
+
+- Publish an OpenAPI specification at `GET /openapi.yaml` for health, `/api/no`, and fallback behavior.
+
 ## 0.2.5 - 2026-10-01
 
 - Add `GET /health`, returning JSON NaaS status and the package version.
