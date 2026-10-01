@@ -25,9 +25,10 @@ Run the fast test suite:
 npm test
 ```
 
-Before opening a pull request, run the coverage gate that CI and the pre-commit hook use:
+Before opening a pull request, run the same gates as the pre-commit hook and CI:
 
 ```sh
+npm run lint
 npm run test:coverage
 ```
 
@@ -78,8 +79,9 @@ Before the first automated publish, maintainers must:
 When `package.json` is part of the commit, the pre-commit hook runs
 `scripts/sync-package-lock.mjs` to regenerate and stage `package-lock.json`.
 
-The pre-commit hook also runs `npm run test:coverage`. Commits are blocked if
-tests fail or coverage drops below 100% for `src/`.
+The pre-commit hook also runs `npm run lint` and `npm run test:coverage`.
+Commits are blocked if linters fail, tests fail, or coverage drops below 100%
+for `src/`.
 
 The pre-push hook runs `npm run verify:release-notes`. Pushes are blocked unless `package.json` is version-bumped and `CHANGELOG.md` includes a matching release entry.
 

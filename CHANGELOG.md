@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.2 - 2026-10-01
+
+- Require `npm run lint` in the Husky pre-commit hook before coverage checks.
+
 ## 0.6.1 - 2026-10-01
 
 - Document `/metrics` exposure, in-memory rate-limit scaling, and `TRUST_PROXY`
