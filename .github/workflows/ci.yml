@@ -80,7 +80,7 @@ jobs:
           trap cleanup EXIT
 
           for attempt in {1..20}; do
-            if curl --fail --silent --output /dev/null http://127.0.0.1:3000/health; then
+            if curl --fail --silent --max-time 5 --output /dev/null http://127.0.0.1:3000/health; then
               break
             fi
 
@@ -94,11 +94,11 @@ jobs:
 
           expected_version="$(node -p "JSON.parse(require('node:fs').readFileSync('package.json', 'utf8')).version")"
 
-          api_no_type="$(curl --fail --silent --show-error --output api-no.txt --write-out '%{content_type}' http://127.0.0.1:3000/api/no)"
+          api_no_type="$(curl --fail --silent --show-error --max-time 5 --output api-no.txt --write-out '%{content_type}' http://127.0.0.1:3000/api/no)"
           [ "$api_no_type" = "text/plain; charset=utf-8" ]
           [ "$(cat api-no.txt)" = "No!" ]
 
-          health_type="$(curl --fail --silent --show-error --output health.json --write-out '%{content_type}' http://127.0.0.1:3000/health)"
+          health_type="$(curl --fail --silent --show-error --max-time 5 --output health.json --write-out '%{content_type}' http://127.0.0.1:3000/health)"
           [ "$health_type" = "application/json; charset=utf-8" ]
           EXPECTED_VERSION="$expected_version" node -e '
             const health = JSON.parse(require("node:fs").readFileSync("health.json", "utf8"));
@@ -107,6 +107,6 @@ jobs:
             }
           '
 
-          version_type="$(curl --fail --silent --show-error --output version.txt --write-out '%{content_type}' http://127.0.0.1:3000/version)"
+          version_type="$(curl --fail --silent --show-error --max-time 5 --output version.txt --write-out '%{content_type}' http://127.0.0.1:3000/version)"
           [ "$version_type" = "text/plain; charset=utf-8" ]
           [ "$(cat version.txt)" = "$expected_version" ]

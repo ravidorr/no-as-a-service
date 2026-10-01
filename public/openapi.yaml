@@ -1,7 +1,7 @@
 openapi: 3.1.1
 info:
   title: NaaS API
-  version: 0.4.0
+  version: 0.4.1
   description: |
     Every unmatched path and HTTP method returns `200 text/plain` with `No!`.
     Static assets, `GET /version`, `GET /health`, and `/api/no` take precedence

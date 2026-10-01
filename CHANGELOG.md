@@ -3,6 +3,7 @@
 ## 0.4.1 - 2026-10-01
 
 - Add CI smoke checks for `/api/no`, `/health`, and `/version`.
+- Sync OpenAPI and README version examples with the package release.
 
 ## 0.4.0 - 2026-10-01
 

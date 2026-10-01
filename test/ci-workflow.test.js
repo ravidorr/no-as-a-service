@@ -16,7 +16,10 @@ test('CI smoke job starts the app and checks public endpoint contracts', () => {
   assert.match(smokeJob, /node src\/server\.js > server\.log 2>&1 &/);
   assert.match(smokeJob, /trap cleanup EXIT/);
   assert.match(smokeJob, /kill -9 "\$server_pid"/);
-  assert.match(smokeJob, /curl --fail --silent --output \/dev\/null http:\/\/127\.0\.0\.1:3000\/health/);
+  assert.match(smokeJob, /curl --fail --silent --max-time 5 --output \/dev\/null http:\/\/127\.0\.0\.1:3000\/health/);
+  assert.match(smokeJob, /--max-time 5 --output api-no\.txt/);
+  assert.match(smokeJob, /--max-time 5 --output health\.json/);
+  assert.match(smokeJob, /--max-time 5 --output version\.txt/);
   assert.match(smokeJob, /cat server\.log/);
   assert.match(smokeJob, /http:\/\/127\.0\.0\.1:3000\/api\/no/);
   assert.match(smokeJob, /http:\/\/127\.0\.0\.1:3000\/health/);
