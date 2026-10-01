@@ -9,6 +9,7 @@ import {
 test('listSourceFiles discovers every src module', () => {
   assert.deepEqual(listSourceFiles().sort(), [
     'cli.js',
+    'graceful-shutdown.js',
     'mcp.js',
     'no.js',
     'rate-limit-config.js',
