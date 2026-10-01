@@ -1,6 +1,11 @@
 import assert from 'node:assert/strict';
+import { spawn } from 'node:child_process';
 import { after, before, test } from 'node:test';
-import { app } from '../src/server.js';
+import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { app, resolveListenPort, resolveServerPort, runIfMain, startServer } from '../src/server.js';
+
+const serverPath = resolve('src/server.js');
 
 let server;
 let baseUrl;
@@ -92,4 +97,149 @@ test('returns No! for other HTTP methods', async () => {
     assert.equal(response.status, 200);
     assert.equal(await response.text(), 'No!');
   }
+});
+
+test('resolveListenPort uses the socket address when available', () => {
+  assert.equal(resolveListenPort({ port: 4242 }, 3000), 4242);
+});
+
+test('resolveListenPort falls back when the address is not an object', () => {
+  assert.equal(resolveListenPort('/tmp/naas.sock', 3000), 3000);
+  assert.equal(resolveListenPort(null, 3000), 3000);
+});
+
+test('resolveServerPort falls back to 3000 when PORT is unset', () => {
+  const previousPort = process.env.PORT;
+
+  try {
+    delete process.env.PORT;
+    assert.equal(resolveServerPort(), 3000);
+  } finally {
+    if (previousPort === undefined) {
+      delete process.env.PORT;
+    } else {
+      process.env.PORT = previousPort;
+    }
+  }
+});
+
+test('resolveServerPort uses PORT from the environment', () => {
+  const previousPort = process.env.PORT;
+
+  try {
+    process.env.PORT = '8080';
+    assert.equal(resolveServerPort(), '8080');
+  } finally {
+    if (previousPort === undefined) {
+      delete process.env.PORT;
+    } else {
+      process.env.PORT = previousPort;
+    }
+  }
+});
+
+test('runIfMain starts the server for the executed module', (t) => {
+  const start = t.mock.fn();
+
+  runIfMain({
+    moduleUrl: pathToFileURL(serverPath).href,
+    argvPath: serverPath,
+    start
+  });
+
+  assert.equal(start.mock.calls.length, 1);
+});
+
+test('runIfMain skips startup when imported as a dependency', (t) => {
+  const start = t.mock.fn();
+
+  runIfMain({
+    moduleUrl: pathToFileURL(serverPath).href,
+    argvPath: resolve('test/server.test.js'),
+    start
+  });
+
+  assert.equal(start.mock.calls.length, 0);
+});
+
+test('startServer uses PORT from the environment by default', async (t) => {
+  const previousPort = process.env.PORT;
+
+  try {
+    process.env.PORT = '0';
+    const log = t.mock.method(console, 'log');
+    const startedServer = startServer();
+
+    await new Promise((resolvePromise) => startedServer.once('listening', resolvePromise));
+
+    const { port } = startedServer.address();
+    assert.equal(log.mock.calls[0]?.arguments[0], `NaaS listening on http://localhost:${port}`);
+
+    await new Promise((resolvePromise, reject) => {
+      startedServer.close((error) => (error ? reject(error) : resolvePromise()));
+    });
+  } finally {
+    if (previousPort === undefined) {
+      delete process.env.PORT;
+    } else {
+      process.env.PORT = previousPort;
+    }
+  }
+});
+
+test('startServer listens and logs the assigned URL', async (t) => {
+  const log = t.mock.method(console, 'log');
+  const startedServer = startServer(0);
+
+  await new Promise((resolvePromise) => startedServer.once('listening', resolvePromise));
+
+  const { port } = startedServer.address();
+  assert.notEqual(port, 0);
+  assert.equal(log.mock.calls[0]?.arguments[0], `NaaS listening on http://localhost:${port}`);
+
+  await new Promise((resolvePromise, reject) => {
+    startedServer.close((error) => (error ? reject(error) : resolvePromise()));
+  });
+});
+
+test('server entrypoint starts when executed directly', async () => {
+  const child = spawn(process.execPath, [serverPath], {
+    env: { ...process.env, PORT: '0' },
+    stdio: ['ignore', 'pipe', 'pipe']
+  });
+
+  let stdout = '';
+
+  const ready = new Promise((resolvePromise, reject) => {
+    const timeoutId = setTimeout(() => reject(new Error('server startup timed out')), 5000);
+
+    child.stdout.on('data', (chunk) => {
+      stdout += chunk;
+
+      if (stdout.includes('NaaS listening on http://localhost:')) {
+        clearTimeout(timeoutId);
+        resolvePromise();
+      }
+    });
+
+    child.on('error', reject);
+    child.on('exit', (code) => {
+      if (code !== null && code !== 0) {
+        clearTimeout(timeoutId);
+        reject(new Error(`server exited early with code ${code}`));
+      }
+    });
+  });
+
+  await ready;
+
+  const portMatch = stdout.match(/http:\/\/localhost:(\d+)/);
+  assert.ok(portMatch);
+
+  const response = await fetch(`http://127.0.0.1:${portMatch[1]}/anything`);
+  assert.equal(response.status, 200);
+  assert.equal(await response.text(), 'No!');
+
+  child.kill();
+  await new Promise((resolvePromise) => child.on('close', resolvePromise));
 });

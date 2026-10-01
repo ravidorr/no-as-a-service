@@ -38,16 +38,42 @@ export function createMcpServer() {
   return server;
 }
 
-export async function runMcpServer() {
-  const server = createMcpServer();
-  const transport = new StdioServerTransport();
+export async function runMcpServer({
+  createServer = createMcpServer,
+  transportFactory = () => new StdioServerTransport()
+} = {}) {
+  const server = createServer();
+  const transport = transportFactory();
 
   await server.connect(transport);
 }
 
-if (import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
-  runMcpServer().catch((error) => {
+export function exitWithCode(code, exitImpl = process.exit.bind(process)) {
+  exitImpl(code);
+}
+
+export function createDefaultExitHandler(exit = exitWithCode) {
+  return (code) => exit(code);
+}
+
+export function runMcpServerCli({
+  run = runMcpServer,
+  exit = createDefaultExitHandler()
+} = {}) {
+  return run().catch((error) => {
     console.error(error);
-    process.exit(1);
+    exit(1);
   });
 }
+
+export function runIfMain({
+  moduleUrl = import.meta.url,
+  argvPath = process.argv[1],
+  start = runMcpServerCli
+} = {}) {
+  if (moduleUrl === pathToFileURL(resolve(argvPath)).href) {
+    start();
+  }
+}
+
+runIfMain();

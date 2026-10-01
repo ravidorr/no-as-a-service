@@ -11,14 +11,19 @@
   },
   "scripts": {
     "mcp": "node src/mcp.js",
+    "prepare": "husky",
     "start": "node src/server.js",
-    "test": "node --test"
+    "test": "node --test",
+    "test:coverage": "node scripts/run-coverage.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
     "express": "^5.1.0"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7"
   }
 }

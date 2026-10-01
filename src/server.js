@@ -18,10 +18,32 @@ app.use((req, res) => {
   res.status(200).type('text/plain').send(NO_RESPONSE);
 });
 
-if (import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
-  const port = process.env.PORT || 3000;
-
-  app.listen(port, () => {
-    console.log(`NaaS listening on http://localhost:${port}`);
-  });
+export function resolveListenPort(address, fallbackPort) {
+  return typeof address === 'object' && address ? address.port : fallbackPort;
 }
+
+export function resolveServerPort(port = process.env.PORT || 3000) {
+  return port;
+}
+
+export function startServer(port = resolveServerPort()) {
+  const server = app.listen(port, () => {
+    const actualPort = resolveListenPort(server.address(), port);
+
+    console.log(`NaaS listening on http://localhost:${actualPort}`);
+  });
+
+  return server;
+}
+
+export function runIfMain({
+  moduleUrl = import.meta.url,
+  argvPath = process.argv[1],
+  start = startServer
+} = {}) {
+  if (moduleUrl === pathToFileURL(resolve(argvPath)).href) {
+    start();
+  }
+}
+
+runIfMain();

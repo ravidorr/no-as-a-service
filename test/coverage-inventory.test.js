@@ -1,0 +1,60 @@
+import assert from 'node:assert/strict';
+import { test } from 'node:test';
+import {
+  findCoverageInventoryMismatches,
+  listSourceFiles,
+  parseCoverageFiles
+} from '../scripts/coverage-inventory.mjs';
+
+test('listSourceFiles discovers every src module', () => {
+  assert.deepEqual(listSourceFiles().sort(), ['cli.js', 'mcp.js', 'no.js', 'server.js']);
+});
+
+test('parseCoverageFiles reads src entries from the coverage report', () => {
+  const output = `
+# start of coverage report
+# -----------------------------------------------------------
+# file       | line % | branch % | funcs % | uncovered lines
+# -----------------------------------------------------------
+# src        |        |          |         |
+#  cli.js    | 100.00 |   100.00 |  100.00 |
+#  mcp.js    | 100.00 |   100.00 |  100.00 |
+# -----------------------------------------------------------
+# all files  | 100.00 |   100.00 |  100.00 |
+# -----------------------------------------------------------
+# end of coverage report
+`;
+
+  assert.deepEqual([...parseCoverageFiles(output)].sort(), ['cli.js', 'mcp.js']);
+});
+
+test('parseCoverageFiles ignores diagnostic lines outside the report', () => {
+  const output = `
+# Error: startup failed
+#     at TestContext.<anonymous> (file:///tmp/example.test.js:1:1)
+# start of coverage report
+#  cli.js    | 100.00 |   100.00 |  100.00 |
+# end of coverage report
+`;
+
+  assert.deepEqual([...parseCoverageFiles(output)], ['cli.js']);
+});
+
+test('findCoverageInventoryMismatches flags src files missing from coverage', () => {
+  const output = `
+# start of coverage report
+#  cli.js    | 100.00 |   100.00 |  100.00 |
+#  mcp.js    | 100.00 |   100.00 |  100.00 |
+# end of coverage report
+`;
+
+  const { missingFiles, unexpectedFiles } = findCoverageInventoryMismatches(output, [
+    'cli.js',
+    'mcp.js',
+    'no.js',
+    'server.js'
+  ]);
+
+  assert.deepEqual(missingFiles, ['no.js', 'server.js']);
+  assert.deepEqual(unexpectedFiles, []);
+});
