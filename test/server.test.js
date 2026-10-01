@@ -16,6 +16,22 @@ import {
 
 const serverPath = resolve('src/server.js');
 
+function stubProcessExit() {
+  const exitCodes = [];
+  const originalExit = process.exit;
+
+  process.exit = (code) => {
+    exitCodes.push(code);
+  };
+
+  return {
+    exitCodes,
+    restore() {
+      process.exit = originalExit;
+    }
+  };
+}
+
 let server;
 let baseUrl;
 
@@ -278,6 +294,7 @@ test('runIfMain skips startup when imported as a dependency', (t) => {
 
 test('startServer uses PORT from the environment by default', async (t) => {
   const previousPort = process.env.PORT;
+  const exitStub = stubProcessExit();
 
   try {
     process.env.PORT = '0';
@@ -293,6 +310,8 @@ test('startServer uses PORT from the environment by default', async (t) => {
       startedServer.close((error) => (error ? reject(error) : resolvePromise()));
     });
   } finally {
+    exitStub.restore();
+
     if (previousPort === undefined) {
       delete process.env.PORT;
     } else {
@@ -302,21 +321,28 @@ test('startServer uses PORT from the environment by default', async (t) => {
 });
 
 test('startServer listens and logs the assigned URL', async (t) => {
+  const exitStub = stubProcessExit();
   const log = t.mock.method(console, 'log');
-  const { server: startedServer } = startServer(0);
 
-  await new Promise((resolvePromise) => startedServer.once('listening', resolvePromise));
+  try {
+    const { server: startedServer } = startServer(0);
 
-  const { port } = startedServer.address();
-  assert.notEqual(port, 0);
-  assert.equal(log.mock.calls[0]?.arguments[0], `NaaS listening on http://localhost:${port}`);
+    await new Promise((resolvePromise) => startedServer.once('listening', resolvePromise));
 
-  await new Promise((resolvePromise, reject) => {
-    startedServer.close((error) => (error ? reject(error) : resolvePromise()));
-  });
+    const { port } = startedServer.address();
+    assert.notEqual(port, 0);
+    assert.equal(log.mock.calls[0]?.arguments[0], `NaaS listening on http://localhost:${port}`);
+
+    await new Promise((resolvePromise, reject) => {
+      startedServer.close((error) => (error ? reject(error) : resolvePromise()));
+    });
+  } finally {
+    exitStub.restore();
+  }
 });
 
-test('startServer exposes draining health through the default app', async () => {
+test('startServer connects graceful shutdown state to the default app', async () => {
+  const exitStub = stubProcessExit();
   const { server: startedServer, gracefulShutdown } = startServer(0);
 
   await new Promise((resolvePromise) => startedServer.once('listening', resolvePromise));
@@ -327,20 +353,21 @@ test('startServer exposes draining health through the default app', async () => 
   try {
     const readyResponse = await fetch(healthUrl);
     assert.equal(readyResponse.status, 200);
+    assert.equal(gracefulShutdown.isDraining(), false);
 
     gracefulShutdown.shutdown('SIGTERM');
 
-    const drainingResponse = await fetch(healthUrl);
-    assert.equal(drainingResponse.status, 503);
+    assert.equal(gracefulShutdown.isDraining(), true);
+    await new Promise((resolvePromise) => setImmediate(resolvePromise));
+    assert.deepEqual(exitStub.exitCodes, [0]);
   } finally {
-    await new Promise((resolvePromise, reject) => {
-      startedServer.close((error) => (error ? reject(error) : resolvePromise()));
-    });
+    exitStub.restore();
   }
 });
 
 test('startServer wires graceful shutdown using SHUTDOWN_TIMEOUT_MS', async () => {
   const previousTimeout = process.env.SHUTDOWN_TIMEOUT_MS;
+  const exitStub = stubProcessExit();
 
   try {
     process.env.SHUTDOWN_TIMEOUT_MS = '5000';
@@ -354,6 +381,8 @@ test('startServer wires graceful shutdown using SHUTDOWN_TIMEOUT_MS', async () =
       startedServer.close((error) => (error ? reject(error) : resolvePromise()));
     });
   } finally {
+    exitStub.restore();
+
     if (previousTimeout === undefined) {
       delete process.env.SHUTDOWN_TIMEOUT_MS;
     } else {

@@ -88,6 +88,22 @@ RATE_LIMIT_WINDOW_MS=900000 RATE_LIMIT_MAX=100 npm start
 Defaults are 100 requests per client IP every 15 minutes. Limits are stored in
 process memory, so multiple instances do not share quota state.
 
+Graceful shutdown applies when the process receives `SIGTERM` or `SIGINT`, such
+as `docker stop` or local `Ctrl+C`. The server stops accepting new connections,
+reaps idle keep-alive sockets, and waits for active requests to finish. While
+draining, `GET /health` returns `503` with the same JSON body so orchestrators
+can stop routing traffic before the process exits.
+
+Configure the drain deadline with:
+
+```sh
+SHUTDOWN_TIMEOUT_MS=30000 npm start
+```
+
+The default is 30 seconds. After the deadline, remaining HTTP connections are
+force-closed before exit. A second signal during shutdown exits immediately with
+a non-zero status.
+
 ## Docker
 
 Build the image:
@@ -119,6 +135,10 @@ Use a different port:
 ```sh
 docker run --rm -e PORT=8080 -p 8080:8080 naas
 ```
+
+The image runs Node directly as PID 1 so container stop signals reach the HTTP
+server. `docker stop` triggers bounded graceful draining using the same
+`SHUTDOWN_TIMEOUT_MS` behavior as local runs.
 
 ## CLI
 

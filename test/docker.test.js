@@ -22,7 +22,11 @@ test('Dockerfile uses Node 22 Alpine with production runtime contract', () => {
     dockerfile,
     /^  CMD wget -qO- "http:\/\/127\.0\.0\.1:\$\{PORT\}\/health" \| grep -q '"status":"No!"'$/m
   );
-  assert.match(dockerfile, /^CMD \["node", "src\/server\.js"\]$/m);
+  assert.match(
+    dockerfile,
+    /^CMD \["node", "src\/server\.js"\]$/m,
+    'exec-form Node CMD forwards SIGTERM and SIGINT to the HTTP server'
+  );
 });
 
 test('.dockerignore excludes development-only build context', () => {
