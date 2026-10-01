@@ -11,7 +11,12 @@ const publicPath = resolve(__dirname, '../public');
 
 app.use(express.static(publicPath));
 
-app.get('/health', (req, res) => {
+app.use('/health', (req, res, next) => {
+  if (req.method !== 'GET') {
+    next();
+    return;
+  }
+
   res.status(200).json({ status: NO_RESPONSE, version: packageInfo.version });
 });
 

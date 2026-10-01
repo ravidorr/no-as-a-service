@@ -41,6 +41,13 @@ test('returns No! for POST /health', async () => {
   assert.equal(await response.text(), 'No!');
 });
 
+test('returns plain-text fallback headers for HEAD /health', async () => {
+  const response = await fetch(`${baseUrl}/health`, { method: 'HEAD' });
+
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get('content-type'), 'text/plain; charset=utf-8');
+});
+
 test('returns No! for any path', async () => {
   const response = await fetch(`${baseUrl}/anything/really?x=1`);
 
