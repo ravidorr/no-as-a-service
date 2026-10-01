@@ -231,21 +231,78 @@ No!
 
 ## MCP
 
-Run the stdio MCP server:
+NaaS can run as a local stdio [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server. It exposes one tool, `no`, which returns `No!` for every call and ignores all arguments.
+
+Install it globally:
+
+```sh
+npm install -g @ravidor/naas
+```
+
+Then configure your MCP client to start the `naas-mcp` command. The client starts and manages the server process. Do not run `naas-mcp` manually while using a client configuration.
+
+### Cursor
+
+Create or update `.cursor/mcp.json` in your workspace:
+
+```json
+{
+  "mcpServers": {
+    "naas": {
+      "command": "naas-mcp"
+    }
+  }
+}
+```
+
+Restart Cursor or reload MCP servers. The `no` tool should appear in the MCP tools list.
+
+### Claude Desktop
+
+Add the following entry to the `mcpServers` object in your Claude Desktop configuration file:
+
+```json
+{
+  "naas": {
+    "command": "naas-mcp"
+  }
+}
+```
+
+Restart Claude Desktop after saving the configuration.
+
+### Local development
+
+After cloning the repository and running `npm install`, configure a client with Node and the absolute path to the checked-out server:
+
+```json
+{
+  "mcpServers": {
+    "naas": {
+      "command": "node",
+      "args": [
+        "/absolute/path/to/no-as-a-service/src/mcp.js"
+      ]
+    }
+  }
+}
+```
+
+For example, this repository can be started directly for troubleshooting:
 
 ```sh
 npm run mcp
 ```
 
-After a global install or `npm link`, MCP clients can use:
+The server uses stdio, so it waits for an MCP client rather than printing a prompt. Stop it with `Ctrl+C`.
 
-```sh
-naas-mcp
+### Verify it works
+
+Ask your MCP-enabled client to call the `no` tool, with any request. It returns:
+
+```text
+No!
 ```
-
-It exposes one tool:
-
-- `no`: returns `No!` and ignores all arguments.
 
 ## Test
 
