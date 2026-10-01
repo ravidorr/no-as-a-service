@@ -181,9 +181,10 @@ test('serves the OpenAPI specification', async () => {
   assert.equal(response.headers.get('content-type'), 'text/yaml; charset=utf-8');
   assert.match(document, /^openapi: 3\.1\.1$/m);
   assert.match(document, /^  title: NaaS API$/m);
-  assert.match(document, /^  \/version:$/m);
-  assert.match(document, /^      summary: Return the package version as plain text$/m);
-  assert.match(document, /^          description: Package version$/m);
+  assert.match(
+    document,
+    /^  \/version:\n    get:\n      summary: Return the package version as plain text\n      responses:\n        '200':\n          description: Package version\n          content:\n            text\/plain:\n              schema:\n                type: string$/m
+  );
   assert.match(document, /^  \/health:$/m);
   assert.match(document, /^  \/api\/no:$/m);
   assert.match(document, /^    HealthResponse:$/m);
