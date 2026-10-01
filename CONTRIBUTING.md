@@ -74,6 +74,17 @@ Before the first automated publish, maintainers must:
 1. Publish once from a trusted machine with `npm login` and `npm publish --access public` (see README).
 2. On npm, open `@ravidor/naas` → **Settings** → **Trusted Publisher** → **GitHub Actions** and link `ravidorr/no-as-a-service` with workflow file `release.yml`.
 
+To smoke-test the publish tarball locally before a release:
+
+```sh
+npm pack
+npm install -g ./ravidor-naas-*.tgz
+naas
+rm ravidor-naas-*.tgz
+```
+
+Pack tarballs are gitignored (`*.tgz`); do not commit them.
+
 ## Git hooks
 
 When `package.json` is part of the commit, the pre-commit hook runs
