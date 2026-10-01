@@ -109,6 +109,10 @@ Contributors should also run the coverage gate before opening a pull request:
 npm run test:coverage
 ```
 
+## Roadmap
+
+See [ROADMAP.md](ROADMAP.md) for completed work, Phase 3 plan, and release process.
+
 ## Community
 
 - [Contributing](CONTRIBUTING.md)
