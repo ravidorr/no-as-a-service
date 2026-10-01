@@ -13,7 +13,8 @@ test('listSourceFiles discovers every src module', () => {
     'no.js',
     'rate-limit-config.js',
     'rate-limit.js',
-    'server.js'
+    'server.js',
+    'shutdown-config.js'
   ]);
 });
 
