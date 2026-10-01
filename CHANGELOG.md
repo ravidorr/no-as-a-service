@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.1 - 2026-10-01
+
+- Skip release-note validation for pull requests that only update GitHub workflows.
+
 ## 0.2.0 - 2026-10-01
 
 - Publish the package to npm as `@ravidorr/naas` with global `naas` and `naas-mcp` binaries.
