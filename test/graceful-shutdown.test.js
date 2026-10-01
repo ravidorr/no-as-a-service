@@ -65,6 +65,7 @@ function createFakeTimers() {
 
 function createShutdownHarness({
   timeoutMs = 30_000,
+  readinessGraceMs = 0,
   server: providedServer,
   processRef: providedProcessRef,
   timers: providedTimers
@@ -79,6 +80,7 @@ function createShutdownHarness({
   const shutdown = createGracefulShutdown({
     server,
     timeoutMs,
+    readinessGraceMs,
     processRef,
     setTimeoutFn: timers.setTimeoutFn,
     clearTimeoutFn: timers.clearTimeoutFn,
@@ -120,6 +122,27 @@ test('install registers SIGTERM and SIGINT handlers', () => {
   assert.deepEqual(sigintHarness.logs[0], ['Received SIGINT, starting graceful shutdown']);
 });
 
+test('first signal defers closing until the readiness grace expires', () => {
+  const { shutdown, calls, timers } = createShutdownHarness({
+    timeoutMs: 1000,
+    readinessGraceMs: 250
+  });
+
+  shutdown.shutdown('SIGTERM');
+
+  assert.equal(shutdown.isDraining(), true);
+  assert.equal(calls.close.length, 0);
+  assert.equal(calls.closeIdleConnections, 0);
+  assert.equal(timers.timers.size, 2);
+
+  const readinessTimerId = [...timers.timers.entries()].find(([, timer]) => timer.delay === 250)?.[0];
+
+  timers.runTimer(readinessTimerId);
+
+  assert.equal(calls.close.length, 1);
+  assert.equal(calls.closeIdleConnections, 1);
+});
+
 test('first signal marks draining, closes the server, and reaps idle connections', () => {
   const { shutdown, calls, logs, timers } = createShutdownHarness({ timeoutMs: 1000 });
 
@@ -131,6 +154,7 @@ test('first signal marks draining, closes the server, and reaps idle connections
   assert.equal(calls.closeAllConnections, 0);
   assert.deepEqual(logs[0], ['Received SIGTERM, starting graceful shutdown']);
   assert.equal(timers.timers.size, 1);
+  assert.equal([...timers.timers.values()][0].delay, 1000);
 });
 
 test('server close clears the deadline and exits cleanly', () => {

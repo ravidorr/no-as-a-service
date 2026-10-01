@@ -1,6 +1,9 @@
+export const DEFAULT_READINESS_GRACE_MS = 1_000;
+
 export function createGracefulShutdown({
   server,
   timeoutMs,
+  readinessGraceMs = DEFAULT_READINESS_GRACE_MS,
   processRef = process,
   setTimeoutFn = setTimeout,
   clearTimeoutFn = clearTimeout,
@@ -10,13 +13,19 @@ export function createGracefulShutdown({
 }) {
   let draining = false;
   let shutdownStarted = false;
+  let readinessTimerId;
   let deadlineTimerId;
 
   function isDraining() {
     return draining;
   }
 
-  function clearDeadline() {
+  function clearTimers() {
+    if (readinessTimerId !== undefined) {
+      clearTimeoutFn(readinessTimerId);
+      readinessTimerId = undefined;
+    }
+
     if (deadlineTimerId !== undefined) {
       clearTimeoutFn(deadlineTimerId);
       deadlineTimerId = undefined;
@@ -24,7 +33,7 @@ export function createGracefulShutdown({
   }
 
   function finishShutdown() {
-    clearDeadline();
+    clearTimers();
     log('Graceful shutdown complete');
     exit(0);
   }
@@ -32,6 +41,13 @@ export function createGracefulShutdown({
   function forceCloseRemainingConnections() {
     log(`Shutdown timeout of ${timeoutMs}ms reached, force-closing remaining connections`);
     server.closeAllConnections();
+  }
+
+  function beginClosingConnections() {
+    server.close(() => {
+      finishShutdown();
+    });
+    server.closeIdleConnections();
   }
 
   function shutdown(signal) {
@@ -46,10 +62,11 @@ export function createGracefulShutdown({
 
     log(`Received ${signal}, starting graceful shutdown`);
 
-    server.close(() => {
-      finishShutdown();
-    });
-    server.closeIdleConnections();
+    if (readinessGraceMs === 0) {
+      beginClosingConnections();
+    } else {
+      readinessTimerId = setTimeoutFn(beginClosingConnections, readinessGraceMs);
+    }
 
     deadlineTimerId = setTimeoutFn(forceCloseRemainingConnections, timeoutMs);
   }

@@ -138,7 +138,9 @@ test('serves the OpenAPI specification', async () => {
   assert.match(document, /^  title: NaaS API$/m);
   assert.match(document, /^  \/health:$/m);
   assert.match(document, /^  \/api\/no:$/m);
-  assert.match(document, /^                required: \[status, version\]$/m);
+  assert.match(document, /^    HealthResponse:$/m);
+  assert.match(document, /^        '503':$/m);
+  assert.match(document, /^          description: Service is draining connections during shutdown$/m);
   assert.match(document, /^        text\/plain:$/m);
   assert.match(document, /^    head:\n      responses:\n        '200':\n          description: No response body$/m);
   assert.match(document, /^    ThrottledResponse:$/m);
@@ -268,7 +270,9 @@ test('resolveServerPort uses PORT from the environment', () => {
 
 test('runIfMain starts the server and installs graceful shutdown for the executed module', (t) => {
   const install = t.mock.fn();
-  const start = t.mock.fn(() => ({ gracefulShutdown: { install } }));
+  const start = t.mock.fn(() => ({
+    gracefulShutdown: { install }
+  }));
 
   runIfMain({
     moduleUrl: pathToFileURL(serverPath).href,
@@ -299,7 +303,7 @@ test('startServer uses PORT from the environment by default', async (t) => {
   try {
     process.env.PORT = '0';
     const log = t.mock.method(console, 'log');
-    const { server: startedServer } = startServer();
+    const startedServer = startServer();
 
     await new Promise((resolvePromise) => startedServer.once('listening', resolvePromise));
 
@@ -325,7 +329,7 @@ test('startServer listens and logs the assigned URL', async (t) => {
   const log = t.mock.method(console, 'log');
 
   try {
-    const { server: startedServer } = startServer(0);
+    const startedServer = startServer(0);
 
     await new Promise((resolvePromise) => startedServer.once('listening', resolvePromise));
 
@@ -343,12 +347,15 @@ test('startServer listens and logs the assigned URL', async (t) => {
 
 test('startServer connects graceful shutdown state to the default app', async () => {
   const exitStub = stubProcessExit();
-  const { server: startedServer, gracefulShutdown } = startServer(0);
+  const startedServer = startServer(0, {
+    shutdownConfig: { timeoutMs: 30_000, readinessGraceMs: 5_000 }
+  });
 
   await new Promise((resolvePromise) => startedServer.once('listening', resolvePromise));
 
   const { port } = startedServer.address();
   const healthUrl = `http://127.0.0.1:${port}/health`;
+  const { gracefulShutdown } = startedServer;
 
   try {
     const readyResponse = await fetch(healthUrl);
@@ -358,6 +365,33 @@ test('startServer connects graceful shutdown state to the default app', async ()
     gracefulShutdown.shutdown('SIGTERM');
 
     assert.equal(gracefulShutdown.isDraining(), true);
+
+    const drainingResponse = await fetch(healthUrl);
+    assert.equal(drainingResponse.status, 503);
+    assert.deepEqual(await drainingResponse.json(), { status: 'No!', version: packageInfo.version });
+
+    await new Promise((resolvePromise, reject) => {
+      startedServer.close((error) => (error ? reject(error) : resolvePromise()));
+    });
+
+    assert.deepEqual(exitStub.exitCodes, []);
+  } finally {
+    exitStub.restore();
+  }
+});
+
+test('startServer exits cleanly after shutdown drain completes', async () => {
+  const exitStub = stubProcessExit();
+  const startedServer = startServer(0, {
+    shutdownConfig: { timeoutMs: 30_000, readinessGraceMs: 0 }
+  });
+
+  await new Promise((resolvePromise) => startedServer.once('listening', resolvePromise));
+
+  const { gracefulShutdown } = startedServer;
+
+  try {
+    gracefulShutdown.shutdown('SIGTERM');
     await new Promise((resolvePromise) => setImmediate(resolvePromise));
     assert.deepEqual(exitStub.exitCodes, [0]);
   } finally {
@@ -371,11 +405,11 @@ test('startServer wires graceful shutdown using SHUTDOWN_TIMEOUT_MS', async () =
 
   try {
     process.env.SHUTDOWN_TIMEOUT_MS = '5000';
-    const { server: startedServer, gracefulShutdown } = startServer(0);
+    const startedServer = startServer(0);
 
     await new Promise((resolvePromise) => startedServer.once('listening', resolvePromise));
 
-    assert.equal(gracefulShutdown.isDraining(), false);
+    assert.equal(startedServer.gracefulShutdown.isDraining(), false);
 
     await new Promise((resolvePromise, reject) => {
       startedServer.close((error) => (error ? reject(error) : resolvePromise()));

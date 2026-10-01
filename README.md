@@ -89,20 +89,21 @@ Defaults are 100 requests per client IP every 15 minutes. Limits are stored in
 process memory, so multiple instances do not share quota state.
 
 Graceful shutdown applies when the process receives `SIGTERM` or `SIGINT`, such
-as `docker stop` or local `Ctrl+C`. The server stops accepting new connections,
-reaps idle keep-alive sockets, and waits for active requests to finish. While
-draining, `GET /health` returns `503` with the same JSON body so orchestrators
-can stop routing traffic before the process exits.
+as `docker stop` or local `Ctrl+C`. The server marks itself as draining and
+continues accepting connections briefly so orchestrators can observe `503` on
+`GET /health` with the same JSON body. After a readiness grace period, it stops
+accepting new connections, reaps idle keep-alive sockets, and waits for active
+requests to finish.
 
-Configure the drain deadline with:
+Configure the drain deadline and readiness grace with:
 
 ```sh
-SHUTDOWN_TIMEOUT_MS=30000 npm start
+SHUTDOWN_TIMEOUT_MS=30000 SHUTDOWN_READINESS_GRACE_MS=1000 npm start
 ```
 
-The default is 30 seconds. After the deadline, remaining HTTP connections are
-force-closed before exit. A second signal during shutdown exits immediately with
-a non-zero status.
+The default drain deadline is 30 seconds. The default readiness grace is 1
+second. After the deadline, remaining HTTP connections are force-closed before
+exit. A second signal during shutdown exits immediately with a non-zero status.
 
 ## Docker
 

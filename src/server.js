@@ -69,10 +69,13 @@ export function startServer(
 
   gracefulShutdownController = createGracefulShutdown({
     server,
-    timeoutMs: shutdownConfig.timeoutMs
+    timeoutMs: shutdownConfig.timeoutMs,
+    readinessGraceMs: shutdownConfig.readinessGraceMs
   });
 
-  return { server, gracefulShutdown: gracefulShutdownController };
+  server.gracefulShutdown = gracefulShutdownController;
+
+  return server;
 }
 
 export function runIfMain({
@@ -81,9 +84,7 @@ export function runIfMain({
   start = startServer
 } = {}) {
   if (moduleUrl === pathToFileURL(resolve(argvPath)).href) {
-    const { gracefulShutdown } = start();
-
-    gracefulShutdown.install();
+    start().gracefulShutdown.install();
   }
 }
 
