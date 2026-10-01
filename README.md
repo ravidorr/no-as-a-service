@@ -49,7 +49,7 @@ curl http://localhost:3000/health
 Output:
 
 ```json
-{"status":"No!","version":"0.6.2"}
+{"status":"No!","version":"0.6.3"}
 ```
 
 Prometheus metrics:
@@ -89,7 +89,7 @@ curl http://localhost:3000/version
 Output:
 
 ```text
-0.6.2
+0.6.3
 ```
 
 OpenAPI specification:
@@ -163,13 +163,13 @@ exit. A second signal during shutdown exits immediately with a non-zero status.
 Pull the published release image:
 
 ```sh
-docker pull ghcr.io/ravidorr/no-as-a-service:0.6.2
+docker pull ghcr.io/ravidorr/no-as-a-service:0.6.3
 ```
 
 Run the container:
 
 ```sh
-docker run --rm -p 3000:3000 ghcr.io/ravidorr/no-as-a-service:0.6.2
+docker run --rm -p 3000:3000 ghcr.io/ravidorr/no-as-a-service:0.6.3
 ```
 
 The version tag is immutable. `latest` tracks the newest release:
