@@ -12,7 +12,7 @@ Living plan for [no-as-a-service](https://github.com/ravidorr/no-as-a-service). 
 | CI publish | [Trusted Publishing](https://docs.npmjs.com/trusted-publishers/) via `release.yml` (no `NPM_TOKEN`) |
 | Required checks on `main` | `test`, `release-notes` |
 | Rate limit (when built) | HTTP `429`, body `No!` (plain text) |
-| Container registry | Local `docker build` only for now; [GHCR](https://ghcr.io) later |
+| Container registry | [GHCR](https://ghcr.io) `ghcr.io/ravidorr/no-as-a-service` on release |
 
 ## Done
 
@@ -33,12 +33,12 @@ Living plan for [no-as-a-service](https://github.com/ravidorr/no-as-a-service). 
 - [x] Graceful shutdown (SIGTERM/SIGINT) for containers with draining `/health`
 - [x] `GET /version` plain-text package version endpoint
 - [x] E2E smoke in CI (`curl /api/no`, `/health`, `/version`)
+- [x] GHCR publish on release (`ghcr.io/ravidorr/no-as-a-service`)
 
 ## Next
 
 Phase 3 product work is complete. Optional follow-ups:
 
-- GHCR publish on release
 - Prometheus `/metrics`
 
 ## Release process (reminder)
@@ -47,7 +47,7 @@ Phase 3 product work is complete. Optional follow-ups:
 2. Implement + tests (keep 100% `src/` coverage)
 3. Bump `package.json` version and add `## X.Y.Z - date` to `CHANGELOG.md`
 4. Open PR → pass `test` + `release-notes` → review → merge
-5. Merge triggers GitHub Release + npm publish (Trusted Publishing)
+5. Merge triggers GitHub Release, npm publish (Trusted Publishing), and GHCR image publish
 
 Manual publish is only needed for bootstrap or recovery; routine releases are automated.
 

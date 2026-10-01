@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.0 - 2026-10-01
+
+- Publish the production Docker image to GHCR on release as
+  `ghcr.io/ravidorr/no-as-a-service`, tagged with the package version and
+  `latest`.
+- Document GHCR pull and run commands in the README.
+
 ## 0.4.1 - 2026-10-01
 
 - Add CI smoke checks for `/api/no`, `/health`, and `/version`.
