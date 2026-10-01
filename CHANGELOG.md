@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.4 - 2026-10-01
+
+- Add ROADMAP.md with completed work, Phase 3 plan, and release reminders.
+- Link the roadmap from README.
+
 ## 0.2.3 - 2026-10-01
 
 - Publish as `@ravidor/naas` to match the npm account scope (GitHub org/user remains `ravidorr`).

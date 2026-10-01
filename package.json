@@ -1,6 +1,6 @@
 {
   "name": "@ravidor/naas",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "No as a Service: every request returns No!",
   "license": "MIT",
   "type": "module",
