@@ -20,8 +20,9 @@ The specification will describe:
 - `GET /health`, returning `200 application/json` with:
   - `status`, a string whose current value is `No!`
   - `version`, the package version
-- `/api/no`, where `GET`, `PUT`, `POST`, `DELETE`, `OPTIONS`, `HEAD`,
-  `PATCH`, and `TRACE` each return `200 text/plain` with the body `No!`
+- `/api/no`, where `GET`, `PUT`, `POST`, `DELETE`, `OPTIONS`, `PATCH`, and
+  `TRACE` return `200 text/plain` with the body `No!`, while `HEAD` returns
+  `200` without a response body
 
 The application fallback handles every unmatched path and method with
 `200 text/plain` and `No!`. OpenAPI path templates cannot express an

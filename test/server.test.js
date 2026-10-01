@@ -53,6 +53,14 @@ test('returns health status and version as JSON', async () => {
   assert.deepEqual(await response.json(), { status: 'No!', version: packageInfo.version });
 });
 
+test('returns No! for unmatched paths below health', async () => {
+  const response = await fetch(`${baseUrl}/health/anything`);
+
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get('content-type'), 'text/plain; charset=utf-8');
+  assert.equal(await response.text(), 'No!');
+});
+
 test('returns No! for POST /health', async () => {
   const response = await fetch(`${baseUrl}/health`, { method: 'POST' });
 
@@ -88,6 +96,7 @@ test('serves the OpenAPI specification', async () => {
   assert.match(document, /^  \/api\/no:$/m);
   assert.match(document, /^                required: \[status, version\]$/m);
   assert.match(document, /^        text\/plain:$/m);
+  assert.match(document, /^    head:\n      responses:\n        '200':\n          description: No response body$/m);
   assert.match(document, /^x-naas-catch-all:$/m);
   assert.match(document, /^  description: Every unmatched request path and HTTP method returns `200 text\/plain` with `No!`\.$/m);
 

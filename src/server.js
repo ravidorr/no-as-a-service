@@ -11,7 +11,7 @@ const publicPath = resolve(__dirname, '../public');
 
 app.use(express.static(publicPath));
 
-app.use('/health', (req, res, next) => {
+app.all('/health', (req, res, next) => {
   if (req.method !== 'GET') {
     next();
     return;

@@ -116,7 +116,7 @@ paths:
     head:
       responses:
         '200':
-          $ref: '#/components/responses/NoResponse'
+          description: No response body
     patch:
       responses:
         '200':
