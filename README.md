@@ -49,7 +49,7 @@ curl http://localhost:3000/health
 Output:
 
 ```json
-{"status":"No!","version":"0.2.6"}
+{"status":"No!","version":"0.2.7"}
 ```
 
 OpenAPI specification:
