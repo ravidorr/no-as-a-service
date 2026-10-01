@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.3 - 2026-10-01
+
+- Document MCP client configuration for Cursor, Claude Desktop, and local development.
+
 ## 0.6.2 - 2026-10-01
 
 - Require `npm run lint` in the Husky pre-commit hook before coverage checks.
