@@ -60,13 +60,16 @@ test('throttles fallback routes after the configured limit is exceeded', async (
   }
 });
 
-test('does not throttle GET /health or static assets', async () => {
+test('does not throttle GET /version, GET /health, or static assets', async () => {
   const { baseUrl, close } = await startServer(createApp({ rateLimitConfig: { windowMs: 60_000, max: 1 } }));
 
   try {
     await fetch(`${baseUrl}/anything`);
     const throttled = await fetch(`${baseUrl}/anything-again`);
     assert.equal(throttled.status, 429);
+
+    const version = await fetch(`${baseUrl}/version`);
+    assert.equal(version.status, 200);
 
     const health = await fetch(`${baseUrl}/health`);
     assert.equal(health.status, 200);
@@ -89,6 +92,21 @@ test('rate limits non-GET /health requests through the fallback', async () => {
     assert.equal(first.status, 200);
 
     const throttled = await fetch(`${baseUrl}/health`, { method: 'POST' });
+    assert.equal(throttled.status, 429);
+    assert.equal(await throttled.text(), 'No!');
+  } finally {
+    await close();
+  }
+});
+
+test('rate limits non-GET /version requests through the fallback', async () => {
+  const { baseUrl, close } = await startServer(createApp({ rateLimitConfig: { windowMs: 60_000, max: 1 } }));
+
+  try {
+    const first = await fetch(`${baseUrl}/version`, { method: 'POST' });
+    assert.equal(first.status, 200);
+
+    const throttled = await fetch(`${baseUrl}/version`, { method: 'POST' });
     assert.equal(throttled.status, 429);
     assert.equal(await throttled.text(), 'No!');
   } finally {

@@ -21,6 +21,15 @@ export function createApp({ rateLimitConfig, isShuttingDown = () => false } = {}
 
   app.use(express.static(publicPath));
 
+  app.all('/version', (req, res, next) => {
+    if (req.method !== 'GET') {
+      next();
+      return;
+    }
+
+    res.status(200).type('text/plain').send(packageInfo.version);
+  });
+
   app.all('/health', (req, res, next) => {
     if (req.method !== 'GET') {
       next();

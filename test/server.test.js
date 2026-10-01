@@ -76,6 +76,30 @@ test('returns health status and version as JSON', async () => {
   assert.deepEqual(await response.json(), { status: 'No!', version: packageInfo.version });
 });
 
+test('returns the package version as plain text', async () => {
+  const response = await fetch(`${baseUrl}/version`);
+
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get('content-type'), 'text/plain; charset=utf-8');
+  assert.equal(await response.text(), packageInfo.version);
+});
+
+test('returns No! for POST /version', async () => {
+  const response = await fetch(`${baseUrl}/version`, { method: 'POST' });
+
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get('content-type'), 'text/plain; charset=utf-8');
+  assert.equal(await response.text(), 'No!');
+});
+
+test('returns No! for unmatched paths below version', async () => {
+  const response = await fetch(`${baseUrl}/version/anything`);
+
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get('content-type'), 'text/plain; charset=utf-8');
+  assert.equal(await response.text(), 'No!');
+});
+
 test('returns 503 for GET /health while shutting down', async () => {
   const drainingApp = createApp({ isShuttingDown: () => true });
   const drainingServer = drainingApp.listen(0);
@@ -90,6 +114,27 @@ test('returns 503 for GET /health while shutting down', async () => {
     assert.equal(response.status, 503);
     assert.match(response.headers.get('content-type'), /^application\/json/);
     assert.deepEqual(await response.json(), { status: 'No!', version: packageInfo.version });
+  } finally {
+    await new Promise((resolvePromise, reject) => {
+      drainingServer.close((error) => (error ? reject(error) : resolvePromise()));
+    });
+  }
+});
+
+test('returns the package version while shutting down', async () => {
+  const drainingApp = createApp({ isShuttingDown: () => true });
+  const drainingServer = drainingApp.listen(0);
+
+  await new Promise((resolvePromise) => drainingServer.once('listening', resolvePromise));
+
+  const { port } = drainingServer.address();
+
+  try {
+    const response = await fetch(`http://127.0.0.1:${port}/version`);
+
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get('content-type'), 'text/plain; charset=utf-8');
+    assert.equal(await response.text(), packageInfo.version);
   } finally {
     await new Promise((resolvePromise, reject) => {
       drainingServer.close((error) => (error ? reject(error) : resolvePromise()));
@@ -136,6 +181,10 @@ test('serves the OpenAPI specification', async () => {
   assert.equal(response.headers.get('content-type'), 'text/yaml; charset=utf-8');
   assert.match(document, /^openapi: 3\.1\.1$/m);
   assert.match(document, /^  title: NaaS API$/m);
+  assert.match(
+    document,
+    /^  \/version:\n    get:\n      summary: Return the package version as plain text\n      responses:\n        '200':\n          description: Package version\n          content:\n            text\/plain:\n              schema:\n                type: string$/m
+  );
   assert.match(document, /^  \/health:$/m);
   assert.match(document, /^  \/api\/no:$/m);
   assert.match(document, /^    HealthResponse:$/m);

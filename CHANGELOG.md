@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.0 - 2026-10-01
+
+- Add `GET /version`, returning the package version as plain text.
+- Document the endpoint in OpenAPI and the README.
+
 ## 0.3.1 - 2026-10-01
 
 - Add graceful shutdown for SIGTERM and SIGINT with configurable

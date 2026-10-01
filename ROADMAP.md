@@ -31,12 +31,12 @@ Living plan for [no-as-a-service](https://github.com/ravidorr/no-as-a-service). 
 - [x] Phase 3c: Production Docker image with `/health` health check
 - [x] Phase 3d: IP-keyed rate limiting with env-configured limits and `429` + `No!`
 - [x] Graceful shutdown (SIGTERM/SIGINT) for containers with draining `/health`
+- [x] `GET /version` plain-text package version endpoint
 
 ## Next
 
 Phase 3 product work is complete. Optional follow-ups:
 
-- `GET /version` (if not redundant with `/health`)
 - E2E smoke in CI (`curl /health`, `/api/no`)
 - GHCR publish on release
 - Prometheus `/metrics`
