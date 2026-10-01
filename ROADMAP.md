@@ -32,12 +32,12 @@ Living plan for [no-as-a-service](https://github.com/ravidorr/no-as-a-service). 
 - [x] Phase 3d: IP-keyed rate limiting with env-configured limits and `429` + `No!`
 - [x] Graceful shutdown (SIGTERM/SIGINT) for containers with draining `/health`
 - [x] `GET /version` plain-text package version endpoint
+- [x] E2E smoke in CI (`curl /api/no`, `/health`, `/version`)
 
 ## Next
 
 Phase 3 product work is complete. Optional follow-ups:
 
-- [x] E2E smoke in CI (`curl /api/no`, `/health`, `/version`)
 - GHCR publish on release
 - Prometheus `/metrics`
 
