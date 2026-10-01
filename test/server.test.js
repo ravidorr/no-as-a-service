@@ -285,6 +285,15 @@ test('serves the UI at root', async () => {
   assert.match(body, />Share link<\/p>/);
   assert.match(body, /All done\. Share the link below\./);
   assert.match(body, /Opening this link shows the question and the NaaS reply\./);
+  assert.match(body, /type="module" src="\/app\.js"/);
+});
+
+test('createApp applies trust proxy when configured', () => {
+  const trusted = createApp({ trustProxy: 1 });
+  const untrusted = createApp({ trustProxy: false });
+
+  assert.equal(trusted.get('trust proxy'), 1);
+  assert.equal(untrusted.get('trust proxy'), false);
 });
 
 test('returns No! from the UI API endpoint', async () => {

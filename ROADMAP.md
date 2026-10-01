@@ -10,7 +10,7 @@ Living plan for [no-as-a-service](https://github.com/ravidorr/no-as-a-service). 
 | --- | --- |
 | npm package | `@ravidor/naas` (matches npm user `ravidor`; GitHub stays `ravidorr`) |
 | CI publish | [Trusted Publishing](https://docs.npmjs.com/trusted-publishers/) via `release.yml` (no `NPM_TOKEN`) |
-| Required checks on `main` | `test`, `release-notes` |
+| Required checks on `main` | `test`, `release-notes`, `lint`, `smoke` |
 | Rate limit | HTTP `429`, body `No!` (plain text) |
 | Container registry | [GHCR](https://ghcr.io) `ghcr.io/ravidorr/no-as-a-service` on release |
 
@@ -38,14 +38,16 @@ Living plan for [no-as-a-service](https://github.com/ravidorr/no-as-a-service). 
 
 ## Next
 
-???
+Product work is complete. Optional follow-ups:
+
+- Shared rate-limit store for multi-instance deployments (for example Redis)
 
 ## Release process (reminder)
 
 1. Branch from `main`
 2. Implement + tests (keep 100% `src/` coverage)
 3. Bump `package.json` version and add `## X.Y.Z - date` to `CHANGELOG.md`
-4. Open PR → pass `test` + `release-notes` → review → merge
+4. Open PR → pass `test`, `release-notes`, `lint`, and `smoke` → review → merge
 5. Merge triggers GitHub Release, npm publish (Trusted Publishing), and GHCR image publish
 
 Manual publish is only needed for bootstrap or recovery; routine releases are automated.

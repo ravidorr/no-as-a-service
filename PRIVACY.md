@@ -6,7 +6,8 @@ NaaS is a small open source project. This policy describes how the project handl
 
 NaaS does not collect, store, sell, or share personal data.
 
-We do not use accounts, analytics, advertising trackers, or cookies for tracking.
+We do not use accounts, analytics, advertising trackers, or cookies for tracking
+end users.
 
 ## What NaaS does
 
@@ -18,7 +19,7 @@ NaaS does not and will not:
 
 - require user accounts
 - collect names, email addresses, or contact details
-- use analytics or telemetry in the application
+- collect user analytics or behavioral telemetry in the application
 - set tracking cookies
 - sell or share personal data with third parties
 
@@ -27,6 +28,13 @@ NaaS does not and will not:
 This repository is hosted on GitHub. GitHub may process data according to its own policies when you browse the repository, open issues, or submit pull requests. That processing is governed by GitHub, not by NaaS.
 
 If you deploy NaaS to your own infrastructure, your hosting provider's policies apply to that deployment.
+
+## Operational metrics
+
+NaaS does not track users. Self-hosted operators may scrape `GET /metrics` for
+operational monitoring (CPU, memory, HTTP request counts, and similar runtime
+signals). That telemetry describes the service process, not individual users or
+request content persisted by the application.
 
 ## Changes
 

@@ -1,3 +1,11 @@
+import {
+  autoplayRequest,
+  copyShareLink,
+  readRequestParam,
+  submitNoRequest
+} from './app-behavior.js';
+import { buildShareUrl, buildSocialShareLinks } from './share-utils.js';
+
 const form = document.querySelector('#naas-form');
 const input = document.querySelector('#request-text');
 const submitButton = document.querySelector('#submit-button');
@@ -15,8 +23,6 @@ const shareStatus = document.querySelector('#share-status');
 const loading = document.querySelector('#loading');
 const status = document.querySelector('#status');
 const responseOutput = document.querySelector('#response');
-const REQUEST_TIMEOUT_MS = 8000;
-const TYPE_DELAY_MS = 45;
 let currentController = null;
 let isLoading = false;
 let requestToken = 0;
@@ -72,18 +78,6 @@ function showShareError(message) {
   shareStatus.classList.add('error');
 }
 
-function buildShareUrl(text) {
-  const url = new URL(window.location.href);
-
-  url.search = '';
-  url.searchParams.set('request', text);
-  return url.href;
-}
-
-function buildShareText(text) {
-  return `NaaS says no to: ${text}`;
-}
-
 function setSocialLink(element, href) {
   element.href = href;
   element.setAttribute('aria-disabled', href ? 'false' : 'true');
@@ -104,17 +98,13 @@ function syncSocialLinks() {
     return;
   }
 
-  const url = shareLink.value;
-  const text = buildShareText(input.value);
-  const encodedUrl = encodeURIComponent(url);
-  const encodedText = encodeURIComponent(text);
-  const encodedEmailBody = encodeURIComponent(`${text}\n\n${url}`);
+  const links = buildSocialShareLinks(window.location.href, input.value);
 
-  setSocialLink(shareXLink, `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`);
-  setSocialLink(shareFacebookLink, `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`);
-  setSocialLink(shareLinkedInLink, `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`);
-  setSocialLink(shareEmailLink, `mailto:?subject=${encodeURIComponent('NaaS link')}&body=${encodedEmailBody}`);
-  setSocialLink(shareWhatsAppLink, `https://wa.me/?text=${encodeURIComponent(`${text} ${url}`)}`);
+  setSocialLink(shareXLink, links.x);
+  setSocialLink(shareFacebookLink, links.facebook);
+  setSocialLink(shareLinkedInLink, links.linkedIn);
+  setSocialLink(shareEmailLink, links.email);
+  setSocialLink(shareWhatsAppLink, links.whatsApp);
 }
 
 function syncShareLink() {
@@ -125,7 +115,7 @@ function syncShareLink() {
     return;
   }
 
-  shareLink.value = buildShareUrl(input.value);
+  shareLink.value = buildShareUrl(window.location.href, input.value);
   syncSocialLinks();
   updateControls();
 }
@@ -172,14 +162,16 @@ copyUrlButton.addEventListener('click', async () => {
     return;
   }
 
-  try {
-    await navigator.clipboard.writeText(shareLink.value);
-    showShareStatus('Link copied.');
-  } catch {
-    shareLink.focus();
-    shareLink.select();
-    showShareError('Copy failed. Select the link manually.');
-  }
+  await copyShareLink({
+    text: shareLink.value,
+    writeText: (text) => navigator.clipboard.writeText(text),
+    onSuccess: () => showShareStatus('Link copied.'),
+    onError: () => {
+      shareLink.focus();
+      shareLink.select();
+      showShareError('Copy failed. Select the link manually.');
+    }
+  });
 });
 
 previewLinkButton.addEventListener('click', () => {
@@ -213,81 +205,51 @@ form.addEventListener('submit', async (event) => {
 
   const submittedText = input.value;
   currentController?.abort();
-  const controller = new AbortController();
-  currentController = controller;
   const token = requestToken + 1;
-  let timedOut = false;
   requestToken = token;
   isLoading = true;
   setLoading(true);
   clearStatus();
   hideResult();
 
-  const timeoutId = window.setTimeout(() => {
-    timedOut = true;
-    controller.abort();
-  }, REQUEST_TIMEOUT_MS);
+  await submitNoRequest({
+    submittedText,
+    isCurrentRequest: () => token === requestToken && input.value === submittedText && hasText(),
+    fetch: fetch.bind(globalThis),
+    onStart: (controller) => {
+      currentController = controller;
+    },
+    onSuccess: showResult,
+    onTimeout: () => showError('NaaS timed out. Try again.'),
+    onUnavailable: () => showError('NaaS is unavailable. Try again.')
+  });
 
-  try {
-    const result = await fetch('/api/no', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json'
-      },
-      body: JSON.stringify({
-        text: submittedText
-      }),
-      signal: controller.signal
-    });
-
-    if (!result.ok) {
-      throw new Error(`Request failed: ${result.status}`);
-    }
-
-    const responseText = await result.text();
-
-    if (token === requestToken && input.value === submittedText && hasText()) {
-      showResult(responseText);
-    }
-  } catch (error) {
-    if (error instanceof Error && error.name === 'AbortError') {
-      if (timedOut && token === requestToken && hasText()) {
-        showError('NaaS timed out. Try again.');
-      }
-
-      return;
-    }
-
-    if (token === requestToken) {
-      showError('NaaS is unavailable. Try again.');
-    }
-  } finally {
-    window.clearTimeout(timeoutId);
-
-    if (token === requestToken) {
-      currentController = null;
-      isLoading = false;
-      syncShareLink();
-      setLoading(false);
-    }
+  if (token === requestToken) {
+    currentController = null;
+    isLoading = false;
+    syncShareLink();
+    setLoading(false);
   }
 });
 
-async function autoplayRequest(text) {
-  input.value = '';
-  input.focus();
-
-  for (const char of text) {
-    input.value += char;
-    input.dispatchEvent(new Event('input', { bubbles: true }));
-    await wait(TYPE_DELAY_MS);
-  }
-
-  form.requestSubmit();
-}
-
-const requestParam = new URLSearchParams(window.location.search).get('request');
+const requestParam = readRequestParam(window.location.search);
 
 if (requestParam) {
-  autoplayRequest(requestParam);
+  autoplayRequest({
+    text: requestParam,
+    clearInput: () => {
+      input.value = '';
+      input.focus();
+    },
+    appendChar: (char) => {
+      input.value += char;
+    },
+    notifyInput: () => {
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    },
+    submitForm: () => {
+      form.requestSubmit();
+    },
+    wait
+  });
 }

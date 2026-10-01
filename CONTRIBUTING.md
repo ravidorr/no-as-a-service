@@ -75,9 +75,11 @@ Before the first automated publish, maintainers must:
 
 ## Git hooks
 
-The pre-commit hook runs `npm install` and stages `package-lock.json` whenever `package.json` is part of the commit.
+When `package.json` is part of the commit, the pre-commit hook runs
+`scripts/sync-package-lock.mjs` to regenerate and stage `package-lock.json`.
 
-The pre-commit hook also runs `npm run test:coverage`. Commits are blocked if tests fail or coverage drops below 100% for `src/`.
+The pre-commit hook also runs `npm run test:coverage`. Commits are blocked if
+tests fail or coverage drops below 100% for `src/`.
 
 The pre-push hook runs `npm run verify:release-notes`. Pushes are blocked unless `package.json` is version-bumped and `CHANGELOG.md` includes a matching release entry.
 

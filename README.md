@@ -49,7 +49,7 @@ curl http://localhost:3000/health
 Output:
 
 ```json
-{"status":"No!","version":"0.6.0"}
+{"status":"No!","version":"0.6.1"}
 ```
 
 Prometheus metrics:
@@ -75,6 +75,11 @@ metrics.
 Standard Node.js process and runtime metrics (CPU, memory, event loop, GC) are
 also included.
 
+Treat `/metrics` as an internal operations endpoint. On the public internet,
+bind to a private network, restrict access at your reverse proxy, or scrape
+from an internal URL only. See [SECURITY.md](SECURITY.md) for deployment
+guidance.
+
 Version:
 
 ```sh
@@ -84,7 +89,7 @@ curl http://localhost:3000/version
 Output:
 
 ```text
-0.6.0
+0.6.1
 ```
 
 OpenAPI specification:
@@ -122,7 +127,19 @@ RATE_LIMIT_WINDOW_MS=900000 RATE_LIMIT_MAX=100 npm start
 ```
 
 Defaults are 100 requests per client IP every 15 minutes. Limits are stored in
-process memory, so multiple instances do not share quota state.
+process memory, so multiple instances do not share quota state. With N replicas,
+the effective limit is roughly N times the configured maximum unless you use a
+shared store (for example Redis; see [ROADMAP.md](ROADMAP.md)).
+
+Behind a reverse proxy or ingress, set `TRUST_PROXY` so limits key on the
+client IP from `X-Forwarded-For` instead of the proxy IP:
+
+```sh
+TRUST_PROXY=1 npm start
+```
+
+Accepted values are `true`, `false`, or a non-negative integer hop count. When
+unset, Express trust proxy stays disabled.
 
 Graceful shutdown applies when the process receives `SIGTERM` or `SIGINT`, such
 as `docker stop` or local `Ctrl+C`. The server marks itself as draining and
@@ -146,13 +163,13 @@ exit. A second signal during shutdown exits immediately with a non-zero status.
 Pull the published release image:
 
 ```sh
-docker pull ghcr.io/ravidorr/no-as-a-service:0.6.0
+docker pull ghcr.io/ravidorr/no-as-a-service:0.6.1
 ```
 
 Run the container:
 
 ```sh
-docker run --rm -p 3000:3000 ghcr.io/ravidorr/no-as-a-service:0.6.0
+docker run --rm -p 3000:3000 ghcr.io/ravidorr/no-as-a-service:0.6.1
 ```
 
 The version tag is immutable. `latest` tracks the newest release:
@@ -244,7 +261,7 @@ npm run test:coverage
 
 ## Roadmap
 
-See [ROADMAP.md](ROADMAP.md) for completed work, Phase 3 plan, and release process.
+See [ROADMAP.md](ROADMAP.md) for completed work and the release process.
 
 ## Community
 

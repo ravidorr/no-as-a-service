@@ -4,7 +4,7 @@ import {
   Histogram,
   Registry,
   collectDefaultMetrics
-} from 'prom-client';
+} from '@prometheus-io/client';
 
 const KNOWN_ROUTES = new Map([
   ['/version', 'version'],

@@ -5,6 +5,24 @@ import { test } from 'node:test';
 
 const ciWorkflowPath = resolve('.github/workflows/ci.yml');
 
+test('CI lint job runs JavaScript, HTML, and Markdown linters', () => {
+  const workflow = readFileSync(ciWorkflowPath, 'utf8');
+  const lintJob = workflow.match(/^  lint:\n(?<body>(?:    .*\n|\n)*)/m)?.groups?.body;
+
+  assert.ok(lintJob);
+  assert.match(lintJob, /^    runs-on: ubuntu-latest$/m);
+  assert.match(lintJob, /node-version: 22/);
+  assert.match(lintJob, /run: npm run lint/);
+});
+
+test('CI smoke job builds the Docker image before endpoint checks', () => {
+  const workflow = readFileSync(ciWorkflowPath, 'utf8');
+  const smokeJob = workflow.match(/^  smoke:\n(?<body>(?:    .*\n|\n)*)/m)?.groups?.body;
+
+  assert.ok(smokeJob);
+  assert.match(smokeJob, /docker build -t naas:ci \./);
+});
+
 test('CI smoke job starts the app and checks public endpoint contracts', () => {
   const workflow = readFileSync(ciWorkflowPath, 'utf8');
   const smokeJob = workflow.match(/^  smoke:\n(?<body>(?:    .*\n|\n)*)/m)?.groups?.body;

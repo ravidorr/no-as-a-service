@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.6.1 - 2026-10-01
+
+- Document `/metrics` exposure, in-memory rate-limit scaling, and `TRUST_PROXY`
+  deployment guidance in README and SECURITY.md.
+- Add optional `TRUST_PROXY` environment variable for reverse-proxy deployments.
+- Require CI `lint` and `smoke` checks, add Docker build to smoke, and align the
+  release workflow on Node.js 22.
+- Migrate from deprecated `prom-client` to `@prometheus-io/client`.
+- Extract share URL helpers to `public/share-utils.js` with unit tests.
+- Extract frontend request, clipboard, and autoplay behavior to
+  `public/app-behavior.js` with unit tests.
+- Add ESLint, html-validate, and markdownlint-cli2.
+- Clarify PRIVACY.md: NaaS does not track users; operators may scrape
+  operational metrics.
+- Fix ROADMAP and CONTRIBUTING drift; include `scripts/prepare-husky.mjs` in the
+  published npm package.
+
 ## 0.6.0 - 2026-10-01
 
 - Add `GET /metrics` for Prometheus scraping with HTTP service metrics and
