@@ -3,6 +3,7 @@ import { resolve } from 'node:path';
 import { test } from 'node:test';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+import packageJson from '../package.json' with { type: 'json' };
 
 const mcpServerPath = resolve('src/mcp.js');
 
@@ -20,6 +21,11 @@ test('MCP server exposes a no tool', async () => {
 
   try {
     await client.connect(transport);
+
+    assert.deepEqual(client.getServerVersion(), {
+      name: 'naas',
+      version: packageJson.version
+    });
 
     const tools = await client.listTools();
     assert.deepEqual(
