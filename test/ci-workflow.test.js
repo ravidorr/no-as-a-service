@@ -20,12 +20,16 @@ test('CI smoke job starts the app and checks public endpoint contracts', () => {
   assert.match(smokeJob, /--max-time 5 --output api-no\.txt/);
   assert.match(smokeJob, /--max-time 5 --output health\.json/);
   assert.match(smokeJob, /--max-time 5 --output version\.txt/);
+  assert.match(smokeJob, /--max-time 5 --output metrics\.txt/);
   assert.match(smokeJob, /cat server\.log/);
   assert.match(smokeJob, /http:\/\/127\.0\.0\.1:3000\/api\/no/);
   assert.match(smokeJob, /http:\/\/127\.0\.0\.1:3000\/health/);
   assert.match(smokeJob, /http:\/\/127\.0\.0\.1:3000\/version/);
+  assert.match(smokeJob, /http:\/\/127\.0\.0\.1:3000\/metrics/);
   assert.match(smokeJob, /\[ "\$\(cat api-no\.txt\)" = "No!" \]/);
   assert.match(smokeJob, /health\.status !== "No!"/);
   assert.match(smokeJob, /EXPECTED_VERSION="\$expected_version"/);
   assert.match(smokeJob, /\[ "\$\(cat version\.txt\)" = "\$expected_version" \]/);
+  assert.match(smokeJob, /\[ "\$metrics_type" = "text\/plain; charset=utf-8; version=0\.0\.4" \]/);
+  assert.match(smokeJob, /grep -q 'naas_http_requests_total' metrics\.txt/);
 });

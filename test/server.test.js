@@ -68,6 +68,59 @@ after(async () => {
   });
 });
 
+test('returns Prometheus metrics with runtime and HTTP families', async () => {
+  await fetch(`${baseUrl}/api/no`);
+  const response = await fetch(`${baseUrl}/metrics`);
+  const body = await response.text();
+
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get('content-type'), /^text\/plain; charset=utf-8; version=0\.0\.4$/);
+  assert.match(body, /# HELP process_cpu_user_seconds_total/);
+  assert.match(body, /# HELP naas_http_requests_total/);
+  assert.match(body, /# HELP naas_http_request_duration_seconds/);
+  assert.match(body, /# HELP naas_http_requests_in_flight/);
+  assert.match(body, /naas_http_requests_total\{route="api_no",method="GET",status_code="200"\}/);
+  assert.doesNotMatch(body, /naas_http_requests_total\{route="metrics"/);
+});
+
+test('returns No! for POST /metrics', async () => {
+  const response = await fetch(`${baseUrl}/metrics`, { method: 'POST' });
+
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get('content-type'), 'text/plain; charset=utf-8');
+  assert.equal(await response.text(), 'No!');
+});
+
+test('returns No! for unmatched paths below metrics', async () => {
+  const response = await fetch(`${baseUrl}/metrics/anything`);
+
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get('content-type'), 'text/plain; charset=utf-8');
+  assert.equal(await response.text(), 'No!');
+});
+
+test('returns metrics while health is draining', async () => {
+  const drainingApp = createApp({ isShuttingDown: () => true });
+  const drainingServer = drainingApp.listen(0);
+
+  await new Promise((resolvePromise) => drainingServer.once('listening', resolvePromise));
+
+  const { port } = drainingServer.address();
+
+  try {
+    const healthResponse = await fetch(`http://127.0.0.1:${port}/health`);
+    const metricsResponse = await fetch(`http://127.0.0.1:${port}/metrics`);
+
+    assert.equal(healthResponse.status, 503);
+    assert.equal(metricsResponse.status, 200);
+    assert.match(await metricsResponse.text(), /# HELP naas_http_requests_total/);
+  } finally {
+    await new Promise((resolvePromise, reject) => {
+      drainingServer.close((error) => (error ? reject(error) : resolvePromise()));
+    });
+  }
+});
+
 test('returns health status and version as JSON', async () => {
   const response = await fetch(`${baseUrl}/health`);
 
@@ -186,6 +239,7 @@ test('serves the OpenAPI specification', async () => {
     /^  \/version:\n    get:\n      summary: Return the package version as plain text\n      responses:\n        '200':\n          description: Package version\n          content:\n            text\/plain:\n              schema:\n                type: string$/m
   );
   assert.match(document, /^  \/health:$/m);
+  assert.match(document, /^  \/metrics:\n    get:\n      summary: Return Prometheus metrics for scraping\n      description: \|\n        Exposes HTTP service metrics and standard Node\.js runtime metrics in\n        Prometheus text format\. Intended for Prometheus scraping\. Exempt from\n        rate limiting\.\n      responses:\n        '200':\n          description: Prometheus metrics exposition format\n          content:\n            text\/plain:\n              schema:\n                type: string$/m);
   assert.match(document, /^  \/api\/no:$/m);
   assert.match(document, /^    HealthResponse:$/m);
   assert.match(document, /^        '503':$/m);

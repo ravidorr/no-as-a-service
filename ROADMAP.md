@@ -11,7 +11,7 @@ Living plan for [no-as-a-service](https://github.com/ravidorr/no-as-a-service). 
 | npm package | `@ravidor/naas` (matches npm user `ravidor`; GitHub stays `ravidorr`) |
 | CI publish | [Trusted Publishing](https://docs.npmjs.com/trusted-publishers/) via `release.yml` (no `NPM_TOKEN`) |
 | Required checks on `main` | `test`, `release-notes` |
-| Rate limit (when built) | HTTP `429`, body `No!` (plain text) |
+| Rate limit | HTTP `429`, body `No!` (plain text) |
 | Container registry | [GHCR](https://ghcr.io) `ghcr.io/ravidorr/no-as-a-service` on release |
 
 ## Done
@@ -32,14 +32,13 @@ Living plan for [no-as-a-service](https://github.com/ravidorr/no-as-a-service). 
 - [x] Phase 3d: IP-keyed rate limiting with env-configured limits and `429` + `No!`
 - [x] Graceful shutdown (SIGTERM/SIGINT) for containers with draining `/health`
 - [x] `GET /version` plain-text package version endpoint
-- [x] E2E smoke in CI (`curl /api/no`, `/health`, `/version`)
+- [x] E2E smoke in CI (`curl /api/no`, `/health`, `/version`, `/metrics`)
 - [x] GHCR publish on release (`ghcr.io/ravidorr/no-as-a-service`)
+- [x] Prometheus `/metrics` with HTTP and Node.js runtime metrics
 
 ## Next
 
-Phase 3 product work is complete. Optional follow-ups:
-
-- Prometheus `/metrics`
+Phase 3 product work is complete. No optional follow-ups are currently planned.
 
 ## Release process (reminder)
 
@@ -54,5 +53,5 @@ Manual publish is only needed for bootstrap or recovery; routine releases are au
 ## Tracking
 
 - **This file:** high-level plan and status
-- **GitHub issues:** create one issue per Phase 3 PR when work starts (optional but recommended)
+- **GitHub issues:** create one issue per feature PR when work starts (optional but recommended)
 - **CHANGELOG.md:** shipped work per version

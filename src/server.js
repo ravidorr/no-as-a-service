@@ -3,6 +3,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import packageInfo from '../package.json' with { type: 'json' };
 import { createGracefulShutdown } from './graceful-shutdown.js';
+import { createMetrics } from './metrics.js';
 import { NO_RESPONSE } from './no.js';
 import { createRateLimitMiddleware } from './rate-limit.js';
 import { parseRateLimitConfig, validateRateLimitConfig } from './rate-limit-config.js';
@@ -12,13 +13,18 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 let gracefulShutdownController;
 
-export function createApp({ rateLimitConfig, isShuttingDown = () => false } = {}) {
+export function createApp({
+  rateLimitConfig,
+  isShuttingDown = () => false,
+  metrics = createMetrics()
+} = {}) {
   const app = express();
   const publicPath = resolve(__dirname, '../public');
   const resolvedRateLimitConfig = rateLimitConfig
     ? validateRateLimitConfig(rateLimitConfig)
     : parseRateLimitConfig();
 
+  app.use(metrics.middleware);
   app.use(express.static(publicPath));
 
   app.all('/version', (req, res, next) => {
@@ -39,6 +45,16 @@ export function createApp({ rateLimitConfig, isShuttingDown = () => false } = {}
     const statusCode = isShuttingDown() ? 503 : 200;
 
     res.status(statusCode).json({ status: NO_RESPONSE, version: packageInfo.version });
+  });
+
+  app.all('/metrics', async (req, res, next) => {
+    if (req.method !== 'GET') {
+      next();
+      return;
+    }
+
+    res.set('Content-Type', metrics.contentType);
+    res.status(200).send(await metrics.metrics());
   });
 
   app.use(createRateLimitMiddleware(resolvedRateLimitConfig));

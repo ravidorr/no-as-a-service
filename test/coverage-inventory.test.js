@@ -11,6 +11,7 @@ test('listSourceFiles discovers every src module', () => {
     'cli.js',
     'graceful-shutdown.js',
     'mcp.js',
+    'metrics.js',
     'no.js',
     'rate-limit-config.js',
     'rate-limit.js',
