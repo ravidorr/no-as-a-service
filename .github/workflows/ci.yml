@@ -9,7 +9,7 @@ on:
       - main
 
 jobs:
-  test:
+  release-notes:
     runs-on: ubuntu-latest
 
     steps:
@@ -18,9 +18,22 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Verify version and changelog
+      - name: Verify version and changelog on pull request
         if: github.event_name == 'pull_request'
         run: node scripts/verify-release-notes.mjs --base origin/${{ github.base_ref }}
+
+      - name: Verify version and changelog on push
+        if: github.event_name == 'push' && github.event.before != '0000000000000000000000000000000000000000'
+        run: node scripts/verify-release-notes.mjs --base ${{ github.event.before }}
+
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Node.js
         uses: actions/setup-node@v4

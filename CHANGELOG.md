@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.0 - 2026-10-01
+
+- Publish the package to npm as `@ravidorr/naas` with global `naas` and `naas-mcp` binaries.
+- Automate GitHub Releases and npm publish when a version bump lands on `main`.
+- Split release-notes verification into its own required CI job for pull requests and pushes.
+- Add Dependabot updates for npm dependencies and GitHub Actions.
+- Refresh the README with Node.js 22+, npm install instructions, and community doc links.
+- Skip Husky setup during CI and non-git installs so global npm installs stay clean.
+
 ## 0.1.1 - 2026-10-01
 
 - Enforce 100% `src/` coverage in tests, CI, and the pre-commit hook.

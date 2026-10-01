@@ -42,6 +42,39 @@ export function hasChangelogEntry(changelog, version) {
   return pattern.test(changelog);
 }
 
+export function extractChangelogSection(changelog, version) {
+  if (!hasChangelogEntry(changelog, version)) {
+    throw new Error(`CHANGELOG.md has no release entry for version ${version}.`);
+  }
+
+  const lines = changelog.split('\n');
+  const headingPrefix = `## ${version} - `;
+  const startIndex = lines.findIndex((line) => line.startsWith(headingPrefix));
+
+  if (startIndex === -1) {
+    throw new Error(`CHANGELOG.md has no release entry for version ${version}.`);
+  }
+
+  const sectionLines = [];
+  const versionHeadingPattern = /^## \d+\.\d+\.\d+ - /;
+
+  for (let index = startIndex + 1; index < lines.length; index += 1) {
+    if (versionHeadingPattern.test(lines[index])) {
+      break;
+    }
+
+    sectionLines.push(lines[index]);
+  }
+
+  const section = sectionLines.join('\n').trim();
+
+  if (!section) {
+    throw new Error(`CHANGELOG.md release entry for version ${version} is empty.`);
+  }
+
+  return section;
+}
+
 export function validateReleaseNotes({
   headVersion,
   baseVersion,

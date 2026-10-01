@@ -55,14 +55,20 @@ Coverage requirements:
 2. Keep changes focused on one fix or feature.
 3. Update or add tests when behavior changes.
 4. Open a pull request against `main`.
-5. Ensure the `test` CI check passes.
+5. Ensure the `test` and `release-notes` CI checks pass.
 6. Request review and resolve all review conversations before merge.
 
 Protected `main` requires:
 
-- a passing `test` check
+- passing `test` and `release-notes` checks
 - at least one approving review
 - resolved review conversations
+
+## Releases
+
+When a version bump merges to `main`, GitHub Actions creates a GitHub Release and publishes `@ravidorr/naas` to npm.
+
+Maintainers must configure the repository secret `NPM_TOKEN` with an npm automation token that can publish `@ravidorr/naas`.
 
 ## Git hooks
 

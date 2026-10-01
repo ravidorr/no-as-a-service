@@ -1,17 +1,42 @@
 {
-  "name": "naas",
-  "version": "0.1.1",
+  "name": "@ravidorr/naas",
+  "version": "0.2.0",
   "description": "No as a Service: every request returns No!",
   "license": "MIT",
   "type": "module",
   "main": "src/server.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ravidorr/no-as-a-service.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ravidorr/no-as-a-service/issues"
+  },
+  "homepage": "https://github.com/ravidorr/no-as-a-service#readme",
+  "keywords": [
+    "naas",
+    "mcp",
+    "cli",
+    "express",
+    "no"
+  ],
+  "files": [
+    "src/",
+    "public/",
+    "LICENSE",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "bin": {
     "naas": "./src/cli.js",
     "naas-mcp": "./src/mcp.js"
   },
   "scripts": {
     "mcp": "node src/mcp.js",
-    "prepare": "husky",
+    "prepare": "node scripts/prepare-husky.mjs",
+    "prepublishOnly": "npm run test:coverage",
     "start": "node src/server.js",
     "test": "node --test",
     "test:coverage": "node scripts/run-coverage.mjs",

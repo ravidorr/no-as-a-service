@@ -8,10 +8,30 @@ Every request returns:
 No!
 ```
 
+## Requirements
+
+- Node.js 22 or newer
+- npm
+
+## Install
+
+Install globally from npm:
+
+```sh
+npm install -g @ravidorr/naas
+```
+
+Or clone and run locally:
+
+```sh
+git clone https://github.com/ravidorr/no-as-a-service.git
+cd no-as-a-service
+npm install
+```
+
 ## Run
 
 ```sh
-npm install
 npm start
 ```
 
@@ -40,6 +60,14 @@ PORT=8080 npm start
 
 ## CLI
 
+After a global install:
+
+```sh
+naas anything at all
+```
+
+For local development:
+
 ```sh
 npm link
 naas anything at all
@@ -59,7 +87,7 @@ Run the stdio MCP server:
 npm run mcp
 ```
 
-After `npm link`, MCP clients can use:
+After a global install or `npm link`, MCP clients can use:
 
 ```sh
 naas-mcp
@@ -74,6 +102,22 @@ It exposes one tool:
 ```sh
 npm test
 ```
+
+Contributors should also run the coverage gate before opening a pull request:
+
+```sh
+npm run test:coverage
+```
+
+## Community
+
+- [Contributing](CONTRIBUTING.md)
+- [Security policy](SECURITY.md)
+- [Support](SUPPORT.md)
+- [Code of Conduct](CODE_OF_CONDUCT.md)
+- [Privacy](PRIVACY.md)
+
+Release policy: every merged change must bump the version in `package.json` and add a matching entry to `CHANGELOG.md`. See [Contributing](CONTRIBUTING.md) for details.
 
 ## License
 
