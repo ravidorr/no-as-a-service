@@ -8,6 +8,7 @@ import {
   parseVersion,
   readChangelogAtRef,
   readPackageVersionAtRef,
+  shouldValidateReleaseNotes,
   validateReleaseNotes
 } from '../scripts/release-notes.mjs';
 
@@ -86,6 +87,20 @@ test('validateReleaseNotes passes when version and changelog are updated', () =>
   });
 
   assert.deepEqual(errors, []);
+});
+
+test('shouldValidateReleaseNotes skips workflow-only changes', () => {
+  assert.equal(
+    shouldValidateReleaseNotes([
+      '.github/workflows/ci.yml',
+      '.github/workflows/release.yml'
+    ]),
+    false
+  );
+  assert.equal(
+    shouldValidateReleaseNotes(['scripts/release-notes.mjs']),
+    true
+  );
 });
 
 test('readPackageVersionAtRef reads the committed HEAD version', () => {
