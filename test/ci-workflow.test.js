@@ -13,9 +13,10 @@ test('CI smoke job starts the app and checks public endpoint contracts', () => {
   assert.match(smokeJob, /^    runs-on: ubuntu-latest$/m);
   assert.match(smokeJob, /^      - name: Set up Node\.js\n        uses: actions\/setup-node@v7\n        with:\n          node-version: 22\n          cache: npm$/m);
   assert.match(smokeJob, /^      - name: Install dependencies\n        run: npm ci$/m);
-  assert.match(smokeJob, /npm start > server\.log 2>&1 &/);
+  assert.match(smokeJob, /node src\/server\.js > server\.log 2>&1 &/);
   assert.match(smokeJob, /trap cleanup EXIT/);
-  assert.match(smokeJob, /curl --fail --silent --show-error http:\/\/127\.0\.0\.1:3000\/health > health\.json/);
+  assert.match(smokeJob, /kill -9 "\$server_pid"/);
+  assert.match(smokeJob, /curl --fail --silent --output \/dev\/null http:\/\/127\.0\.0\.1:3000\/health/);
   assert.match(smokeJob, /cat server\.log/);
   assert.match(smokeJob, /http:\/\/127\.0\.0\.1:3000\/api\/no/);
   assert.match(smokeJob, /http:\/\/127\.0\.0\.1:3000\/health/);
