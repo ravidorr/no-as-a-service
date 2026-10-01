@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.6.0 - 2026-10-01
+
+- Add `GET /metrics` for Prometheus scraping with HTTP service metrics and
+  standard Node.js runtime metrics.
+- Exempt the metrics endpoint from rate limiting and document the contract in
+  OpenAPI and the README.
+- Extend CI smoke checks to validate the metrics endpoint.
+
 ## 0.5.0 - 2026-10-01
 
 - Publish the production Docker image to GHCR on release as

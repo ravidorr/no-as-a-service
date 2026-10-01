@@ -49,8 +49,31 @@ curl http://localhost:3000/health
 Output:
 
 ```json
-{"status":"No!","version":"0.5.0"}
+{"status":"No!","version":"0.6.0"}
 ```
+
+Prometheus metrics:
+
+```sh
+curl http://localhost:3000/metrics
+```
+
+Output is Prometheus text format (`text/plain; charset=utf-8; version=0.0.4`).
+The endpoint is public, exempt from rate limiting, and remains available during
+graceful shutdown.
+
+Custom HTTP metrics:
+
+- `naas_http_requests_total{route,method,status_code}`
+- `naas_http_request_duration_seconds{route,method,status_code}`
+- `naas_http_requests_in_flight{route,method}`
+
+Route labels are normalized to `version`, `health`, `metrics`, `api_no`, or
+`fallback`. Scrape traffic to `/metrics` is not counted in the custom HTTP
+metrics.
+
+Standard Node.js process and runtime metrics (CPU, memory, event loop, GC) are
+also included.
 
 Version:
 
@@ -61,7 +84,7 @@ curl http://localhost:3000/version
 Output:
 
 ```text
-0.5.0
+0.6.0
 ```
 
 OpenAPI specification:
@@ -88,8 +111,9 @@ Use a different port:
 PORT=8080 npm start
 ```
 
-Rate limiting applies to `/api/no` and fallback routes. Static assets and
-`GET /health` are exempt. Throttled requests return `429` with the body `No!`.
+Rate limiting applies to `/api/no` and fallback routes. Static assets,
+`GET /health`, and `GET /metrics` are exempt. Throttled requests return `429`
+with the body `No!`.
 
 Configure the limit with environment variables:
 
@@ -122,13 +146,13 @@ exit. A second signal during shutdown exits immediately with a non-zero status.
 Pull the published release image:
 
 ```sh
-docker pull ghcr.io/ravidorr/no-as-a-service:0.5.0
+docker pull ghcr.io/ravidorr/no-as-a-service:0.6.0
 ```
 
 Run the container:
 
 ```sh
-docker run --rm -p 3000:3000 ghcr.io/ravidorr/no-as-a-service:0.5.0
+docker run --rm -p 3000:3000 ghcr.io/ravidorr/no-as-a-service:0.6.0
 ```
 
 The version tag is immutable. `latest` tracks the newest release:

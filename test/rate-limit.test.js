@@ -60,7 +60,7 @@ test('throttles fallback routes after the configured limit is exceeded', async (
   }
 });
 
-test('does not throttle GET /version, GET /health, or static assets', async () => {
+test('does not throttle GET /version, GET /health, GET /metrics, or static assets', async () => {
   const { baseUrl, close } = await startServer(createApp({ rateLimitConfig: { windowMs: 60_000, max: 1 } }));
 
   try {
@@ -74,11 +74,30 @@ test('does not throttle GET /version, GET /health, or static assets', async () =
     const health = await fetch(`${baseUrl}/health`);
     assert.equal(health.status, 200);
 
+    const metrics = await fetch(`${baseUrl}/metrics`);
+    assert.equal(metrics.status, 200);
+
     const openapi = await fetch(`${baseUrl}/openapi.yaml`);
     assert.equal(openapi.status, 200);
 
     const ui = await fetch(`${baseUrl}/`);
     assert.equal(ui.status, 200);
+  } finally {
+    await close();
+  }
+});
+
+test('does not throttle GET /metrics even after the configured limit is exhausted', async () => {
+  const { baseUrl, close } = await startServer(createApp({ rateLimitConfig: { windowMs: 60_000, max: 1 } }));
+
+  try {
+    await fetch(`${baseUrl}/api/no`);
+    const throttled = await fetch(`${baseUrl}/api/no`);
+    assert.equal(throttled.status, 429);
+
+    const metrics = await fetch(`${baseUrl}/metrics`);
+    assert.equal(metrics.status, 200);
+    assert.match(metrics.headers.get('content-type'), /^text\/plain; charset=utf-8; version=0\.0\.4$/);
   } finally {
     await close();
   }
