@@ -26,19 +26,14 @@ Living plan for [no-as-a-service](https://github.com/ravidorr/no-as-a-service). 
 - [x] GitHub Releases on version bump to `main`
 - [x] npm publish `@ravidor/naas` + Trusted Publisher for `ravidorr/no-as-a-service` / `release.yml`
 - [x] README install and contributor guidance
+- [x] Phase 3a: Health endpoint (`GET /health` JSON status and version)
+- [x] Phase 3b: OpenAPI specification at `GET /openapi.yaml`
+- [x] Phase 3c: Production Docker image with `/health` health check
+- [x] Phase 3d: IP-keyed rate limiting with env-configured limits and `429` + `No!`
 
-## Next (Phase 3 — product)
+## Next
 
-Ship as **small PRs**, each with version bump + `CHANGELOG.md` entry.
-
-| Order | Work | Deliverable | Target bump |
-| --- | --- | --- | --- |
-| 3a | Health endpoint | `GET /health` → `200` JSON (`status`, `version`); registered before catch-all | patch |
-| 3b | OpenAPI | `openapi.yaml` + serve or static path; documents `/health`, `/api/no`, catch-all behavior | patch |
-| 3c | Docker | `Dockerfile`, `.dockerignore`, README run instructions; `HEALTHCHECK` on `/health` | patch |
-| 3d | Rate limiting | Middleware (env-configured); exempt `/health` and static assets; `429` + `No!` | minor |
-
-### Optional follow-ups (after 3a–3d)
+Phase 3 product work is complete. Optional follow-ups:
 
 - Graceful shutdown (SIGTERM) for containers
 - `GET /version` (if not redundant with `/health`)

@@ -7,7 +7,14 @@ import {
 } from '../scripts/coverage-inventory.mjs';
 
 test('listSourceFiles discovers every src module', () => {
-  assert.deepEqual(listSourceFiles().sort(), ['cli.js', 'mcp.js', 'no.js', 'server.js']);
+  assert.deepEqual(listSourceFiles().sort(), [
+    'cli.js',
+    'mcp.js',
+    'no.js',
+    'rate-limit-config.js',
+    'rate-limit.js',
+    'server.js'
+  ]);
 });
 
 test('parseCoverageFiles reads src entries from the coverage report', () => {

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.0 - 2026-10-01
+
+- Add IP-keyed HTTP rate limiting with env-configured limits, modern rate-limit
+  headers, and `429` responses that return `No!`.
+- Exempt static assets and `GET /health` from rate limiting.
+- Document rate-limit configuration in README and OpenAPI.
+
 ## 0.2.7 - 2026-10-01
 
 - Add a production Docker image with a `/health` health check and README run instructions.
