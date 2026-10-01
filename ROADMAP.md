@@ -2,7 +2,7 @@
 
 Living plan for [no-as-a-service](https://github.com/ravidorr/no-as-a-service). Update this file when scope or priorities change.
 
-**Current release:** `@ravidor/naas@0.2.3` on [npm](https://www.npmjs.com/package/@ravidor/naas)
+**Current release:** [`@ravidor/naas`](https://www.npmjs.com/package/@ravidor/naas) — version on `main` lives in [`package.json`](./package.json); tags and notes on [GitHub Releases](https://github.com/ravidorr/no-as-a-service/releases).
 
 ## Decisions (locked in)
 
