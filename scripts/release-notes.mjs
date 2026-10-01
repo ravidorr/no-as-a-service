@@ -35,8 +35,9 @@ export function readChangelogAtRef(ref = 'HEAD') {
   return execSync(`git show ${ref}:CHANGELOG.md`, { encoding: 'utf8' });
 }
 
-export function readChangedFilesSince(baseRef) {
-  const output = execSync(`git diff --name-only ${baseRef}...HEAD`, {
+export function readChangedFilesSince(baseRef, cwd) {
+  const output = execSync(`git diff --no-renames --name-only ${baseRef}...HEAD`, {
+    cwd,
     encoding: 'utf8'
   });
 

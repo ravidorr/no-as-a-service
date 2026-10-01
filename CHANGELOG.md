@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.2 - 2026-10-01
+
+- Preserve non-workflow paths when classifying renamed files for release-note validation.
+
 ## 0.2.1 - 2026-10-01
 
 - Skip release-note validation for pull requests that only update GitHub workflows.
