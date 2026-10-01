@@ -8,6 +8,7 @@ import { NO_RESPONSE } from './no.js';
 import { createRateLimitMiddleware } from './rate-limit.js';
 import { parseRateLimitConfig, validateRateLimitConfig } from './rate-limit-config.js';
 import { parseShutdownConfig } from './shutdown-config.js';
+import { parseTrustProxyConfig } from './trust-proxy-config.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -16,13 +17,18 @@ let gracefulShutdownController;
 export function createApp({
   rateLimitConfig,
   isShuttingDown = () => false,
-  metrics = createMetrics()
+  metrics = createMetrics(),
+  trustProxy = parseTrustProxyConfig()
 } = {}) {
   const app = express();
   const publicPath = resolve(__dirname, '../public');
   const resolvedRateLimitConfig = rateLimitConfig
     ? validateRateLimitConfig(rateLimitConfig)
     : parseRateLimitConfig();
+
+  if (trustProxy !== false) {
+    app.set('trust proxy', trustProxy);
+  }
 
   app.use(metrics.middleware);
   app.use(express.static(publicPath));

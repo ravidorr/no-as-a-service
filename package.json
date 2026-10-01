@@ -1,6 +1,6 @@
 {
   "name": "@ravidor/naas",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "No as a Service: every request returns No!",
   "license": "MIT",
   "type": "module",
@@ -23,6 +23,7 @@
   "files": [
     "src/",
     "public/",
+    "scripts/prepare-husky.mjs",
     "LICENSE",
     "README.md"
   ],
@@ -40,18 +41,27 @@
     "start": "node src/server.js",
     "test": "node --test",
     "test:coverage": "node scripts/run-coverage.mjs",
+    "lint": "npm run lint:js && npm run lint:html && npm run lint:md",
+    "lint:js": "eslint .",
+    "lint:html": "html-validate public/*.html",
+    "lint:md": "markdownlint-cli2 \"**/*.md\" \"#node_modules\"",
     "verify:release-notes": "node scripts/verify-release-notes.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
+    "@prometheus-io/client": "^0.16.1",
     "express": "^5.1.0",
-    "express-rate-limit": "^8.7.0",
-    "prom-client": "^15.1.3"
+    "express-rate-limit": "^8.7.0"
   },
   "engines": {
     "node": ">=22"
   },
   "devDependencies": {
-    "husky": "^9.1.7"
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.11.0",
+    "globals": "^17.13.0",
+    "html-validate": "^11.0.0",
+    "husky": "^9.1.7",
+    "markdownlint-cli2": "^0.23.3"
   }
 }

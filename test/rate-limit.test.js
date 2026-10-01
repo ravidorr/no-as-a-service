@@ -156,8 +156,10 @@ test('returns modern rate-limit headers without legacy headers', async () => {
 });
 
 test('tracks clients separately when proxy trust and forwarded headers differ', async () => {
-  const app = createApp({ rateLimitConfig: { windowMs: 60_000, max: 1 } });
-  app.set('trust proxy', 1);
+  const app = createApp({
+    rateLimitConfig: { windowMs: 60_000, max: 1 },
+    trustProxy: 1
+  });
   const { baseUrl, close } = await startServer(app);
 
   try {

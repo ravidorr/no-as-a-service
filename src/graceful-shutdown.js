@@ -1,4 +1,4 @@
-export const DEFAULT_READINESS_GRACE_MS = 1_000;
+import { DEFAULT_READINESS_GRACE_MS } from './shutdown-config.js';
 
 export function createGracefulShutdown({
   server,
