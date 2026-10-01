@@ -4,12 +4,13 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import packageJson from '../package.json' with { type: 'json' };
 import { NO_RESPONSE } from './no.js';
 
 export function createMcpServer() {
   const server = new McpServer({
     name: 'naas',
-    version: '0.1.0'
+    version: packageJson.version
   });
 
   server.registerTool(
