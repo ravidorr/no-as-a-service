@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.1 - 2026-10-01
+
+- Add graceful shutdown for SIGTERM and SIGINT with configurable
+  `SHUTDOWN_TIMEOUT_MS` (default 30 seconds).
+- Return `503` from `GET /health` while the server is draining connections.
+- Document container shutdown behavior in README and mark the roadmap item complete.
+
 ## 0.3.0 - 2026-10-01
 
 - Add IP-keyed HTTP rate limiting with env-configured limits, modern rate-limit

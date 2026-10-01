@@ -49,7 +49,7 @@ curl http://localhost:3000/health
 Output:
 
 ```json
-{"status":"No!","version":"0.3.0"}
+{"status":"No!","version":"0.3.1"}
 ```
 
 OpenAPI specification:
@@ -88,6 +88,23 @@ RATE_LIMIT_WINDOW_MS=900000 RATE_LIMIT_MAX=100 npm start
 Defaults are 100 requests per client IP every 15 minutes. Limits are stored in
 process memory, so multiple instances do not share quota state.
 
+Graceful shutdown applies when the process receives `SIGTERM` or `SIGINT`, such
+as `docker stop` or local `Ctrl+C`. The server marks itself as draining and
+continues accepting connections briefly so orchestrators can observe `503` on
+`GET /health` with the same JSON body. After a readiness grace period, it stops
+accepting new connections, reaps idle keep-alive sockets, and waits for active
+requests to finish.
+
+Configure the drain deadline and readiness grace with:
+
+```sh
+SHUTDOWN_TIMEOUT_MS=30000 SHUTDOWN_READINESS_GRACE_MS=1000 npm start
+```
+
+The default drain deadline is 30 seconds. The default readiness grace is 1
+second. After the deadline, remaining HTTP connections are force-closed before
+exit. A second signal during shutdown exits immediately with a non-zero status.
+
 ## Docker
 
 Build the image:
@@ -119,6 +136,10 @@ Use a different port:
 ```sh
 docker run --rm -e PORT=8080 -p 8080:8080 naas
 ```
+
+The image runs Node directly as PID 1 so container stop signals reach the HTTP
+server. `docker stop` triggers bounded graceful draining using the same
+`SHUTDOWN_TIMEOUT_MS` behavior as local runs.
 
 ## CLI
 
