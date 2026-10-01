@@ -5,7 +5,14 @@ import { after, before, test } from 'node:test';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import packageInfo from '../package.json' with { type: 'json' };
-import { app, resolveListenPort, resolveServerPort, runIfMain, startServer } from '../src/server.js';
+import {
+  app,
+  createApp,
+  resolveListenPort,
+  resolveServerPort,
+  runIfMain,
+  startServer
+} from '../src/server.js';
 
 const serverPath = resolve('src/server.js');
 
@@ -51,6 +58,27 @@ test('returns health status and version as JSON', async () => {
   assert.equal(response.status, 200);
   assert.match(response.headers.get('content-type'), /^application\/json/);
   assert.deepEqual(await response.json(), { status: 'No!', version: packageInfo.version });
+});
+
+test('returns 503 for GET /health while shutting down', async () => {
+  const drainingApp = createApp({ isShuttingDown: () => true });
+  const drainingServer = drainingApp.listen(0);
+
+  await new Promise((resolvePromise) => drainingServer.once('listening', resolvePromise));
+
+  const { port } = drainingServer.address();
+
+  try {
+    const response = await fetch(`http://127.0.0.1:${port}/health`);
+
+    assert.equal(response.status, 503);
+    assert.match(response.headers.get('content-type'), /^application\/json/);
+    assert.deepEqual(await response.json(), { status: 'No!', version: packageInfo.version });
+  } finally {
+    await new Promise((resolvePromise, reject) => {
+      drainingServer.close((error) => (error ? reject(error) : resolvePromise()));
+    });
+  }
 });
 
 test('returns No! for unmatched paths below health', async () => {
@@ -222,8 +250,9 @@ test('resolveServerPort uses PORT from the environment', () => {
   }
 });
 
-test('runIfMain starts the server for the executed module', (t) => {
-  const start = t.mock.fn();
+test('runIfMain starts the server and installs graceful shutdown for the executed module', (t) => {
+  const install = t.mock.fn();
+  const start = t.mock.fn(() => ({ gracefulShutdown: { install } }));
 
   runIfMain({
     moduleUrl: pathToFileURL(serverPath).href,
@@ -232,6 +261,7 @@ test('runIfMain starts the server for the executed module', (t) => {
   });
 
   assert.equal(start.mock.calls.length, 1);
+  assert.equal(install.mock.calls.length, 1);
 });
 
 test('runIfMain skips startup when imported as a dependency', (t) => {
@@ -252,7 +282,7 @@ test('startServer uses PORT from the environment by default', async (t) => {
   try {
     process.env.PORT = '0';
     const log = t.mock.method(console, 'log');
-    const startedServer = startServer();
+    const { server: startedServer } = startServer();
 
     await new Promise((resolvePromise) => startedServer.once('listening', resolvePromise));
 
@@ -273,7 +303,7 @@ test('startServer uses PORT from the environment by default', async (t) => {
 
 test('startServer listens and logs the assigned URL', async (t) => {
   const log = t.mock.method(console, 'log');
-  const startedServer = startServer(0);
+  const { server: startedServer } = startServer(0);
 
   await new Promise((resolvePromise) => startedServer.once('listening', resolvePromise));
 
@@ -286,6 +316,52 @@ test('startServer listens and logs the assigned URL', async (t) => {
   });
 });
 
+test('startServer exposes draining health through the default app', async () => {
+  const { server: startedServer, gracefulShutdown } = startServer(0);
+
+  await new Promise((resolvePromise) => startedServer.once('listening', resolvePromise));
+
+  const { port } = startedServer.address();
+  const healthUrl = `http://127.0.0.1:${port}/health`;
+
+  try {
+    const readyResponse = await fetch(healthUrl);
+    assert.equal(readyResponse.status, 200);
+
+    gracefulShutdown.shutdown('SIGTERM');
+
+    const drainingResponse = await fetch(healthUrl);
+    assert.equal(drainingResponse.status, 503);
+  } finally {
+    await new Promise((resolvePromise, reject) => {
+      startedServer.close((error) => (error ? reject(error) : resolvePromise()));
+    });
+  }
+});
+
+test('startServer wires graceful shutdown using SHUTDOWN_TIMEOUT_MS', async () => {
+  const previousTimeout = process.env.SHUTDOWN_TIMEOUT_MS;
+
+  try {
+    process.env.SHUTDOWN_TIMEOUT_MS = '5000';
+    const { server: startedServer, gracefulShutdown } = startServer(0);
+
+    await new Promise((resolvePromise) => startedServer.once('listening', resolvePromise));
+
+    assert.equal(gracefulShutdown.isDraining(), false);
+
+    await new Promise((resolvePromise, reject) => {
+      startedServer.close((error) => (error ? reject(error) : resolvePromise()));
+    });
+  } finally {
+    if (previousTimeout === undefined) {
+      delete process.env.SHUTDOWN_TIMEOUT_MS;
+    } else {
+      process.env.SHUTDOWN_TIMEOUT_MS = previousTimeout;
+    }
+  }
+});
+
 test('server entrypoint starts when executed directly', async () => {
   const child = spawn(process.execPath, [serverPath], {
     env: { ...process.env, PORT: '0' },
@@ -294,25 +370,30 @@ test('server entrypoint starts when executed directly', async () => {
 
   let stdout = '';
 
+  child.stdout.on('data', (chunk) => {
+    stdout += chunk;
+  });
+
   const ready = new Promise((resolvePromise, reject) => {
     const timeoutId = setTimeout(() => reject(new Error('server startup timed out')), 5000);
 
-    child.stdout.on('data', (chunk) => {
-      stdout += chunk;
-
+    const checkReady = () => {
       if (stdout.includes('NaaS listening on http://localhost:')) {
         clearTimeout(timeoutId);
         resolvePromise();
       }
-    });
+    };
 
+    child.stdout.on('data', checkReady);
     child.on('error', reject);
     child.on('exit', (code) => {
-      if (code !== null && code !== 0) {
+      if (code !== null && code !== 0 && !stdout.includes('NaaS listening on http://localhost:')) {
         clearTimeout(timeoutId);
         reject(new Error(`server exited early with code ${code}`));
       }
     });
+
+    checkReady();
   });
 
   await ready;
@@ -324,6 +405,12 @@ test('server entrypoint starts when executed directly', async () => {
   assert.equal(response.status, 200);
   assert.equal(await response.text(), 'No!');
 
-  child.kill();
-  await new Promise((resolvePromise) => child.on('close', resolvePromise));
+  const closed = new Promise((resolvePromise) => child.on('close', resolvePromise));
+
+  child.kill('SIGTERM');
+  await closed;
+
+  assert.match(stdout, /Received SIGTERM, starting graceful shutdown/);
+  assert.match(stdout, /Graceful shutdown complete/);
+  assert.equal(child.exitCode, 0);
 });
