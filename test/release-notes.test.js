@@ -1,13 +1,18 @@
 import assert from 'node:assert/strict';
-import { execSync } from 'node:child_process';
+import { execFileSync, execSync } from 'node:child_process';
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { test } from 'node:test';
 import {
   compareVersions,
   extractChangelogSection,
   hasChangelogEntry,
   parseVersion,
+  readChangedFilesSince,
   readChangelogAtRef,
   readPackageVersionAtRef,
+  shouldValidateReleaseNotes,
   validateReleaseNotes
 } from '../scripts/release-notes.mjs';
 
@@ -86,6 +91,82 @@ test('validateReleaseNotes passes when version and changelog are updated', () =>
   });
 
   assert.deepEqual(errors, []);
+});
+
+test('shouldValidateReleaseNotes skips workflow-only changes', () => {
+  assert.equal(
+    shouldValidateReleaseNotes([
+      '.github/workflows/ci.yml',
+      '.github/workflows/release.yml'
+    ]),
+    false
+  );
+  assert.equal(
+    shouldValidateReleaseNotes(['scripts/release-notes.mjs']),
+    true
+  );
+});
+
+test('readChangedFilesSince includes both paths for a rename into workflows', () => {
+  const repositoryPath = mkdtempSync(join(tmpdir(), 'naas-release-notes-'));
+  const runGit = (...args) =>
+    execFileSync('git', args, { cwd: repositoryPath, encoding: 'utf8' });
+
+  try {
+    runGit('init', '--initial-branch=main');
+    runGit('config', 'user.email', 'test@example.com');
+    runGit('config', 'user.name', 'Test User');
+
+    mkdirSync(join(repositoryPath, 'src'));
+    writeFileSync(join(repositoryPath, 'src', 'app.js'), 'export {};\n');
+    runGit('add', '.');
+    runGit('commit', '-m', 'add source file');
+
+    const baseRef = runGit('rev-parse', 'HEAD').trim();
+    mkdirSync(join(repositoryPath, '.github', 'workflows'), { recursive: true });
+    runGit('mv', 'src/app.js', '.github/workflows/app.yml');
+    runGit('commit', '-m', 'move source file to workflow');
+
+    const changedFiles = readChangedFilesSince(baseRef, repositoryPath);
+
+    assert.deepEqual(changedFiles, [
+      '.github/workflows/app.yml',
+      'src/app.js'
+    ]);
+    assert.equal(shouldValidateReleaseNotes(changedFiles), true);
+  } finally {
+    rmSync(repositoryPath, { force: true, recursive: true });
+  }
+});
+
+test('readChangedFilesSince skips a rename within workflows', () => {
+  const repositoryPath = mkdtempSync(join(tmpdir(), 'naas-release-notes-'));
+  const runGit = (...args) =>
+    execFileSync('git', args, { cwd: repositoryPath, encoding: 'utf8' });
+
+  try {
+    runGit('init', '--initial-branch=main');
+    runGit('config', 'user.email', 'test@example.com');
+    runGit('config', 'user.name', 'Test User');
+
+    mkdirSync(join(repositoryPath, '.github', 'workflows'), { recursive: true });
+    writeFileSync(join(repositoryPath, '.github/workflows/ci.yml'), 'name: CI\n');
+    runGit('add', '.');
+    runGit('commit', '-m', 'add workflow');
+
+    const baseRef = runGit('rev-parse', 'HEAD').trim();
+    runGit('mv', '.github/workflows/ci.yml', '.github/workflows/release.yml');
+    runGit('commit', '-m', 'rename workflow');
+
+    assert.equal(
+      shouldValidateReleaseNotes(
+        readChangedFilesSince(baseRef, repositoryPath)
+      ),
+      false
+    );
+  } finally {
+    rmSync(repositoryPath, { force: true, recursive: true });
+  }
 });
 
 test('readPackageVersionAtRef reads the committed HEAD version', () => {

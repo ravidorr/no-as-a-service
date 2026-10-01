@@ -35,6 +35,21 @@ export function readChangelogAtRef(ref = 'HEAD') {
   return execSync(`git show ${ref}:CHANGELOG.md`, { encoding: 'utf8' });
 }
 
+export function readChangedFilesSince(baseRef, cwd) {
+  const output = execSync(`git diff --no-renames --name-only ${baseRef}...HEAD`, {
+    cwd,
+    encoding: 'utf8'
+  });
+
+  return output.split('\n').filter(Boolean);
+}
+
+export function shouldValidateReleaseNotes(changedFiles) {
+  return changedFiles.some(
+    (file) => !file.startsWith('.github/workflows/')
+  );
+}
+
 export function hasChangelogEntry(changelog, version) {
   const escapedVersion = version.replace(/\./g, '\\.');
   const pattern = new RegExp(`^## ${escapedVersion} - `, 'm');
@@ -98,6 +113,10 @@ export function validateReleaseNotes({
 }
 
 export function verifyReleaseNotesAgainstBase(baseRef) {
+  if (!shouldValidateReleaseNotes(readChangedFilesSince(baseRef))) {
+    return [];
+  }
+
   const headVersion = readPackageVersionAtRef('HEAD');
   const baseVersion = readPackageVersionAtRef(baseRef);
   const changelog = readChangelogAtRef('HEAD');
