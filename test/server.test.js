@@ -97,8 +97,9 @@ test('serves the OpenAPI specification', async () => {
   assert.match(document, /^                required: \[status, version\]$/m);
   assert.match(document, /^        text\/plain:$/m);
   assert.match(document, /^    head:\n      responses:\n        '200':\n          description: No response body$/m);
+  assert.match(document, /^    ThrottledResponse:$/m);
   assert.match(document, /^x-naas-catch-all:$/m);
-  assert.match(document, /^  description: Every unmatched request path and HTTP method returns `200 text\/plain` with `No!`\.$/m);
+  assert.match(document, /^  description: Every unmatched request path and HTTP method returns `200 text\/plain` with `No!` until throttled, then `429 text\/plain` with `No!`\.$/m);
 
   for (const method of ['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace']) {
     assert.match(document, new RegExp(`^    ${method}:$`, 'm'));

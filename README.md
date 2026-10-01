@@ -49,7 +49,7 @@ curl http://localhost:3000/health
 Output:
 
 ```json
-{"status":"No!","version":"0.2.7"}
+{"status":"No!","version":"0.3.0"}
 ```
 
 OpenAPI specification:
@@ -75,6 +75,18 @@ Use a different port:
 ```sh
 PORT=8080 npm start
 ```
+
+Rate limiting applies to `/api/no` and fallback routes. Static assets and
+`GET /health` are exempt. Throttled requests return `429` with the body `No!`.
+
+Configure the limit with environment variables:
+
+```sh
+RATE_LIMIT_WINDOW_MS=900000 RATE_LIMIT_MAX=100 npm start
+```
+
+Defaults are 100 requests per client IP every 15 minutes. Limits are stored in
+process memory, so multiple instances do not share quota state.
 
 ## Docker
 
