@@ -37,7 +37,7 @@ Living plan for [no-as-a-service](https://github.com/ravidorr/no-as-a-service). 
 
 Phase 3 product work is complete. Optional follow-ups:
 
-- E2E smoke in CI (`curl /health`, `/api/no`)
+- [x] E2E smoke in CI (`curl /api/no`, `/health`, `/version`)
 - GHCR publish on release
 - Prometheus `/metrics`
 

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.1 - 2026-10-01
+
+- Add CI smoke checks for `/api/no`, `/health`, and `/version`.
+
 ## 0.4.0 - 2026-10-01
 
 - Add `GET /version`, returning the package version as plain text.
