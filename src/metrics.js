@@ -43,7 +43,7 @@ export function createMetrics() {
   });
 
   function middleware(req, res, next) {
-    if (req.path === '/metrics') {
+    if (req.path === '/metrics' && req.method === 'GET') {
       next();
       return;
     }
@@ -54,13 +54,31 @@ export function createMetrics() {
 
     requestsInFlight.inc(labels);
     const endTimer = requestDurationSeconds.startTimer({ route, method });
+    let finalized = false;
 
-    res.on('finish', () => {
-      const statusCode = String(res.statusCode);
+    function finalize() {
+      if (finalized) {
+        return;
+      }
+
+      finalized = true;
+      const statusCode = String(res.statusCode || 499);
 
       requestsInFlight.dec(labels);
       endTimer({ status_code: statusCode });
       requestsTotal.inc({ route, method, status_code: statusCode });
+    }
+
+    res.on('finish', finalize);
+    res.on('close', () => {
+      if (!res.writableFinished) {
+        finalize();
+      }
+    });
+    req.on('close', () => {
+      if (!finalized) {
+        finalize();
+      }
     });
 
     next();

@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
+import { EventEmitter } from 'node:events';
 import express from 'express';
+import { request as httpRequest } from 'node:http';
 import { test } from 'node:test';
 import { createMetrics, normalizeRoute } from '../src/metrics.js';
 
@@ -67,7 +69,7 @@ test('middleware records normalized labels and decrements in-flight gauge on fin
   }
 });
 
-test('middleware does not observe /metrics scrape traffic', async () => {
+test('middleware does not observe GET /metrics scrape traffic', async () => {
   const metrics = createMetrics();
   const { baseUrl, close } = await startApp((app) => {
     app.use(metrics.middleware);
@@ -87,6 +89,194 @@ test('middleware does not observe /metrics scrape traffic', async () => {
   } finally {
     await close();
   }
+});
+
+test('middleware observes non-GET /metrics fallback traffic', async () => {
+  const metrics = createMetrics();
+  const { baseUrl, close } = await startApp((app) => {
+    app.use(metrics.middleware);
+    app.all('/metrics', (req, res, next) => {
+      if (req.method === 'GET') {
+        res.status(200).send('metrics');
+        return;
+      }
+
+      next();
+    });
+    app.use((_req, res) => {
+      res.status(200).type('text/plain').send('No!');
+    });
+  });
+
+  try {
+    const response = await fetch(`${baseUrl}/metrics`, { method: 'POST' });
+    assert.equal(response.status, 200);
+
+    const text = await metrics.metrics();
+
+    assert.match(text, /naas_http_requests_total\{route="metrics",method="POST",status_code="200"\} 1/);
+    assert.match(text, /naas_http_requests_in_flight\{route="metrics",method="POST"\} 0/);
+  } finally {
+    await close();
+  }
+});
+
+test('middleware decrements in-flight gauge when the client disconnects early', async () => {
+  const metrics = createMetrics();
+  const { baseUrl, close } = await startApp((app) => {
+    app.use(metrics.middleware);
+    app.get('/slow', (_req, res) => {
+      setTimeout(() => {
+        res.status(200).send('done');
+      }, 1000);
+    });
+  });
+
+  try {
+    await new Promise((resolve) => {
+      const client = httpRequest(`${baseUrl}/slow`, (response) => {
+        response.on('data', () => {});
+      });
+
+      client.on('error', () => resolve());
+      client.end();
+      setTimeout(() => {
+        client.destroy();
+        resolve();
+      }, 20);
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    const text = await metrics.metrics();
+
+    assert.match(text, /naas_http_requests_in_flight\{route="fallback",method="GET"\} 0/);
+  } finally {
+    await close();
+  }
+});
+
+test('request close is ignored after finish already finalized metrics', async () => {
+  const metrics = createMetrics();
+  const req = new EventEmitter();
+  const res = new EventEmitter();
+
+  req.path = '/version';
+  req.method = 'GET';
+  res.statusCode = 200;
+  Object.defineProperty(res, 'writableFinished', {
+    configurable: true,
+    get() {
+      return true;
+    }
+  });
+
+  metrics.middleware(req, res, () => {});
+
+  res.emit('finish');
+  req.emit('close');
+
+  const text = await metrics.metrics();
+
+  assert.match(text, /naas_http_requests_total\{route="version",method="GET",status_code="200"\} 1/);
+});
+
+test('finalize runs only once across finish, response close, and request close', async () => {
+  const metrics = createMetrics();
+  const req = new EventEmitter();
+  const res = new EventEmitter();
+
+  req.path = '/api/no';
+  req.method = 'GET';
+  res.statusCode = 200;
+  Object.defineProperty(res, 'writableFinished', {
+    configurable: true,
+    get() {
+      return false;
+    }
+  });
+
+  metrics.middleware(req, res, () => {});
+
+  res.emit('finish');
+  res.emit('close');
+  req.emit('close');
+
+  const text = await metrics.metrics();
+
+  assert.match(text, /naas_http_requests_total\{route="api_no",method="GET",status_code="200"\} 1/);
+  assert.match(text, /naas_http_requests_in_flight\{route="api_no",method="GET"\} 0/);
+});
+
+test('request close uses 499 when no response status was set', async () => {
+  const metrics = createMetrics();
+  const req = new EventEmitter();
+  const res = new EventEmitter();
+
+  req.path = '/abort';
+  req.method = 'GET';
+  Object.defineProperty(res, 'writableFinished', {
+    configurable: true,
+    get() {
+      return false;
+    }
+  });
+
+  metrics.middleware(req, res, () => {});
+  req.emit('close');
+
+  const text = await metrics.metrics();
+
+  assert.match(text, /naas_http_requests_total\{route="fallback",method="GET",status_code="499"\} 1/);
+});
+
+test('request close finalizes metrics when the response never finishes', async () => {
+  const metrics = createMetrics();
+  const req = new EventEmitter();
+  const res = new EventEmitter();
+
+  req.path = '/slow';
+  req.method = 'GET';
+  res.statusCode = 499;
+  Object.defineProperty(res, 'writableFinished', {
+    configurable: true,
+    get() {
+      return false;
+    }
+  });
+
+  metrics.middleware(req, res, () => {});
+  req.emit('close');
+
+  const text = await metrics.metrics();
+
+  assert.match(text, /naas_http_requests_total\{route="fallback",method="GET",status_code="499"\} 1/);
+  assert.match(text, /naas_http_requests_in_flight\{route="fallback",method="GET"\} 0/);
+});
+
+test('response close after finish does not double-count when writableFinished is true', async () => {
+  const metrics = createMetrics();
+  const req = new EventEmitter();
+  const res = new EventEmitter();
+
+  req.path = '/health';
+  req.method = 'GET';
+  res.statusCode = 200;
+  Object.defineProperty(res, 'writableFinished', {
+    configurable: true,
+    get() {
+      return true;
+    }
+  });
+
+  metrics.middleware(req, res, () => {});
+
+  res.emit('finish');
+  res.emit('close');
+
+  const text = await metrics.metrics();
+
+  assert.match(text, /naas_http_requests_total\{route="health",method="GET",status_code="200"\} 1/);
 });
 
 test('middleware normalizes unmatched paths to fallback', async () => {

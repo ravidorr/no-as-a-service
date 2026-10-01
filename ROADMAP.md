@@ -38,7 +38,7 @@ Living plan for [no-as-a-service](https://github.com/ravidorr/no-as-a-service). 
 
 ## Next
 
-Phase 3 product work is complete. No optional follow-ups are currently planned.
+???
 
 ## Release process (reminder)
 
