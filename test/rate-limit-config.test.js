@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import {
   DEFAULT_RATE_LIMIT_MAX,
   DEFAULT_RATE_LIMIT_WINDOW_MS,
+  MAX_RATE_LIMIT_WINDOW_MS,
   parsePositiveInteger,
   parseRateLimitConfig,
   validateRateLimitConfig
@@ -76,5 +77,16 @@ test('validateRateLimitConfig rejects invalid values', () => {
   assert.throws(
     () => validateRateLimitConfig({ windowMs: 1000, max: 0 }),
     /max must be a positive integer/
+  );
+  assert.throws(
+    () => validateRateLimitConfig({ windowMs: MAX_RATE_LIMIT_WINDOW_MS + 1, max: 1 }),
+    /windowMs must not exceed 2147483647, the maximum Node.js timer delay/
+  );
+});
+
+test('parseRateLimitConfig rejects windows beyond the Node.js timer limit', () => {
+  assert.throws(
+    () => parseRateLimitConfig({ RATE_LIMIT_WINDOW_MS: String(MAX_RATE_LIMIT_WINDOW_MS + 1) }),
+    /windowMs must not exceed 2147483647, the maximum Node.js timer delay/
   );
 });

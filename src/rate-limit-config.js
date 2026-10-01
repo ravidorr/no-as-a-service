@@ -1,5 +1,6 @@
 export const DEFAULT_RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
 export const DEFAULT_RATE_LIMIT_MAX = 100;
+export const MAX_RATE_LIMIT_WINDOW_MS = 2_147_483_647;
 
 export function parsePositiveInteger(value, name) {
   if (value === undefined || value === '') {
@@ -18,6 +19,12 @@ export function parsePositiveInteger(value, name) {
 export function validateRateLimitConfig(config) {
   if (!Number.isInteger(config.windowMs) || config.windowMs <= 0) {
     throw new Error('windowMs must be a positive integer');
+  }
+
+  if (config.windowMs > MAX_RATE_LIMIT_WINDOW_MS) {
+    throw new Error(
+      `windowMs must not exceed ${MAX_RATE_LIMIT_WINDOW_MS}, the maximum Node.js timer delay`
+    );
   }
 
   if (!Number.isInteger(config.max) || config.max <= 0) {
