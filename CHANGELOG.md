@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.3 - 2026-10-01
+
+- Publish as `@ravidor/naas` to match the npm account scope (GitHub org/user remains `ravidorr`).
+- Parse Node.js 24 info-prefixed coverage reports in the inventory check.
+- Run coverage explicitly in the release workflow before publishing without lifecycle scripts.
+
 ## 0.2.2 - 2026-10-01
 
 - Preserve non-workflow paths when classifying renamed files for release-note validation.
@@ -10,7 +16,7 @@
 
 ## 0.2.0 - 2026-10-01
 
-- Publish the package to npm as `@ravidorr/naas` with global `naas` and `naas-mcp` binaries.
+- Publish the package to npm as `@ravidor/naas` with global `naas` and `naas-mcp` binaries.
 - Automate GitHub Releases and npm publish when a version bump lands on `main`.
 - Split release-notes verification into its own required CI job for pull requests and pushes.
 - Add Dependabot updates for npm dependencies and GitHub Actions.

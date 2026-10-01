@@ -28,6 +28,22 @@ test('parseCoverageFiles reads src entries from the coverage report', () => {
   assert.deepEqual([...parseCoverageFiles(output)].sort(), ['cli.js', 'mcp.js']);
 });
 
+test('parseCoverageFiles reads info-prefixed coverage rows from Node 24 output', () => {
+  const output = `
+ℹ start of coverage report
+ℹ -----------------------------------------------------------
+ℹ file       | line % | branch % | funcs % | uncovered lines
+ℹ -----------------------------------------------------------
+ℹ src        |        |          |         |
+ℹ  cli.js    | 100.00 |   100.00 |  100.00 |
+ℹ  mcp.js    | 100.00 |   100.00 |  100.00 |
+ℹ -----------------------------------------------------------
+ℹ end of coverage report
+`;
+
+  assert.deepEqual([...parseCoverageFiles(output)].sort(), ['cli.js', 'mcp.js']);
+});
+
 test('parseCoverageFiles ignores diagnostic lines outside the report', () => {
   const output = `
 # Error: startup failed

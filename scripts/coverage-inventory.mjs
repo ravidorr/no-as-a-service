@@ -19,21 +19,30 @@ export function listSourceFiles(directory = 'src') {
   });
 }
 
-export function extractCoverageReport(output) {
-  const start = output.indexOf('# start of coverage report');
-  const end = output.indexOf('# end of coverage report');
+const COVERAGE_REPORT_PREFIX = '[#ℹ]';
 
-  if (start === -1 || end === -1 || end <= start) {
+export function extractCoverageReport(output) {
+  const startMatch = output.match(
+    new RegExp(`${COVERAGE_REPORT_PREFIX} start of coverage report`)
+  );
+  const endMatch = output.match(
+    new RegExp(`${COVERAGE_REPORT_PREFIX} end of coverage report`)
+  );
+
+  if (!startMatch || !endMatch || endMatch.index <= startMatch.index) {
     return '';
   }
 
-  return output.slice(start, end);
+  return output.slice(startMatch.index, endMatch.index);
 }
 
 export function parseCoverageFiles(output) {
   const files = new Set();
   const report = extractCoverageReport(output);
-  const rowPattern = /^# {2}([A-Za-z0-9._/-]+\.js)\s+\|/gm;
+  const rowPattern = new RegExp(
+    `^${COVERAGE_REPORT_PREFIX} {2}([A-Za-z0-9._/-]+\\.js)\\s+\\|`,
+    'gm'
+  );
 
   for (const match of report.matchAll(rowPattern)) {
     files.add(normalizePath(match[1].trim()));

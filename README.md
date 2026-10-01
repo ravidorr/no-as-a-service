@@ -18,7 +18,7 @@ No!
 Install globally from npm:
 
 ```sh
-npm install -g @ravidorr/naas
+npm install -g @ravidor/naas
 ```
 
 Or clone and run locally:
