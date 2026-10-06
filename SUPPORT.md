@@ -2,7 +2,9 @@
 
 ## Getting help
 
-Support for NaaS is provided through [GitHub issues](https://github.com/ravidorr/no-as-a-service/issues).
+NaaS is deprecated. For new projects and ongoing support, use [YESorNOaaS](https://github.com/ravidorr/yes-or-no-as-a-service).
+
+Legacy NaaS issues remain available through [GitHub issues](https://github.com/ravidorr/no-as-a-service/issues).
 
 Use issues for:
 

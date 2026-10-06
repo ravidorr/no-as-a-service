@@ -1,5 +1,7 @@
 # NaaS roadmap
 
+**Deprecated.** NaaS is superseded by [YESorNOaaS](https://github.com/ravidorr/yes-or-no-as-a-service). New work happens there.
+
 Living plan for [no-as-a-service](https://github.com/ravidorr/no-as-a-service). Update this file when scope or priorities change.
 
 **Current release:** [`@ravidor/naas`](https://www.npmjs.com/package/@ravidor/naas) — version on `main` lives in [`package.json`](./package.json); tags and notes on [GitHub Releases](https://github.com/ravidorr/no-as-a-service/releases).
