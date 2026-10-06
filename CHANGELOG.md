@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.3 - 2026-10-06
+
+- Deprecate NaaS in favor of [YESorNOaaS](https://github.com/ravidorr/yes-or-no-as-a-service).
+  Use `@ravidor/yesornoaas` for Yes!, No!, and random answers in one service.
+
 ## 0.6.2 - 2026-10-01
 
 - Require `npm run lint` in the Husky pre-commit hook before coverage checks.

@@ -1,7 +1,8 @@
 {
   "name": "@ravidor/naas",
-  "version": "0.6.2",
-  "description": "No as a Service: every request returns No!",
+  "version": "0.6.3",
+  "deprecated": "NaaS is superseded by YESorNOaaS. Use @ravidor/yesornoaas: https://github.com/ravidorr/yes-or-no-as-a-service",
+  "description": "Deprecated: No as a Service. Use @ravidor/yesornoaas instead.",
   "license": "MIT",
   "type": "module",
   "main": "src/server.js",
